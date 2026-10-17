@@ -1,0 +1,38 @@
+# SDKs and local tools downloaded for this workstation
+.tooling/
+/model/
+
+# Flutter, Dart and Gradle generated files
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.gradle/
+**/build/
+**/coverage/
+**/.pub-cache/
+**/.pub/
+**/captures/
+**/.cxx/
+
+# Local editor and operating-system files
+**/.idea/
+**/*.iml
+**/.DS_Store
+**/Thumbs.db
+**/*.log
+**/*.swp
+
+# Local configuration and signing secrets
+**/.env
+**/.env.*
+!**/.env.example
+**/local.properties
+**/key.properties
+**/*.jks
+**/*.keystore
+**/*.p12
+
+# Local camera/test captures and generated Dart symbol maps
+**/app.*.symbols
+**/app.*.map.json
+**/lingosign-current.png
