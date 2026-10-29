@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lingosign_ai/app/camera_gateway.dart';
+import 'package:lingosign_ai/app/local_data_providers.dart';
+import 'package:lingosign_ai/features/history/domain/entities/recognition_record.dart';
+import 'package:lingosign_ai/features/recognition/domain/usecases/select_window_prediction.dart';
 import 'package:lingosign_ai/features/recognition/domain/entities/recognition_prediction.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -23,6 +26,57 @@ class _HomePageState extends ConsumerState<HomePage>
   CameraGateway? _gateway;
   StreamSubscription<RecognitionPrediction>? _predictionSubscription;
   RecognitionPrediction? _latestPrediction;
+  final _window = SelectWindowPrediction();
+  Timer? _windowTimer;
+  Future<void> _saveQueue = Future<void>.value();
+  int _recordSequence = 0;
+
+  void _collectPrediction(RecognitionPrediction prediction) {
+    if (!mounted || !_active) return;
+    _window.add(prediction);
+    if (!prediction.isUnknown && _windowTimer == null) {
+      _windowTimer = Timer(const Duration(seconds: 1), _finishWindow);
+    }
+  }
+
+  void _finishWindow() {
+    _windowTimer = null;
+    final best = _window.take();
+    if (!mounted || !_active || best == null) return;
+    setState(() => _latestPrediction = best);
+    final now = DateTime.now();
+    final record = RecognitionRecord(
+      id: '${now.microsecondsSinceEpoch}-${_recordSequence++}',
+      signCode: best.labelId!,
+      label: best.labelId!,
+      confirmedAt: now,
+    );
+    final repository = ref.read(historyRepositoryProvider);
+    final camera = _gateway;
+    final photo = camera is HistoryPhotoCamera
+        ? (camera as HistoryPhotoCamera).captureHistoryPhoto()
+        : null;
+    _saveQueue = _saveQueue.then((_) async {
+      try {
+        final bytes = await photo;
+        await repository.saveConfirmed(record, photo: bytes);
+        if (photo != null && bytes == null && mounted) {
+          setState(
+            () => _message = 'Đã lưu kết quả nhưng không chụp được ảnh.',
+          );
+        }
+      } catch (_) {
+        if (mounted) setState(() => _message = 'Không lưu được lịch sử.');
+      }
+    });
+  }
+
+  void _resetWindow() {
+    _windowTimer?.cancel();
+    _windowTimer = null;
+    _window.take();
+  }
+
   Future<void>? _openingTask;
   Future<void> _backgroundClose = Future<void>.value();
 
@@ -86,11 +140,9 @@ class _HomePageState extends ConsumerState<HomePage>
       result = const CameraOpenFailed(CameraOpenFailure.unavailable);
     }
     if (result is CameraOpened) {
-      _predictionSubscription = _gateway!.predictions.listen((prediction) {
-        if (mounted && _active) {
-          setState(() => _latestPrediction = prediction);
-        }
-      });
+      _predictionSubscription = _gateway!.predictions.listen(
+        _collectPrediction,
+      );
     }
     setState(() {
       _opening = false;
@@ -115,6 +167,7 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 
   Future<void> _closeCamera() async {
+    _resetWindow();
     if (mounted) {
       setState(() {
         _active = false;
@@ -140,6 +193,7 @@ class _HomePageState extends ConsumerState<HomePage>
 
   @override
   void dispose() {
+    _resetWindow();
     WidgetsBinding.instance.removeObserver(this);
     final subscription = _predictionSubscription;
     if (subscription != null) unawaited(subscription.cancel());
@@ -166,7 +220,7 @@ class _HomePageState extends ConsumerState<HomePage>
         ),
         const SizedBox(height: 8),
         const Text(
-          'Camera chỉ mở khi bạn nhấn bắt đầu. Dự đoán ký hiệu đang thử nghiệm vì cách tạo dữ liệu huấn luyện chưa được xác minh.',
+          'Mỗi giây, chọn dự đoán có độ tin cậy cao nhất và tự lưu kết quả cùng ảnh vào lịch sử trên thiết bị. Camera tiếp tục chạy cho đến khi bạn bấm dừng.',
         ),
         const SizedBox(height: 16),
         AspectRatio(
@@ -192,7 +246,7 @@ class _HomePageState extends ConsumerState<HomePage>
                   ? 'Đưa bàn tay vào khung hình'
                   : _latestPrediction!.isUnknown
                   ? 'Chưa thấy bàn tay'
-                  : 'Dự đoán thử nghiệm: ${_latestPrediction!.labelId} '
+                  : 'Kết quả: ${_latestPrediction!.labelId} '
                         '(${(_latestPrediction!.confidence * 100).toStringAsFixed(0)}%)',
               style: Theme.of(context).textTheme.titleLarge,
             ),

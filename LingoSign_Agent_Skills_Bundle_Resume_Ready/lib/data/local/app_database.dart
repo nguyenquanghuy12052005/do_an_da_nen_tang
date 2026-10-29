@@ -24,11 +24,11 @@ class SignEntries extends Table {
 @DataClassName('RecognitionHistoryRow')
 class RecognitionHistoryRows extends Table {
   TextColumn get id => text()();
-  TextColumn get signCode =>
-      text().references(SignEntries, #code, onDelete: KeyAction.restrict)();
+  TextColumn get signCode => text()();
   TextColumn get labelSnapshot => text()();
   IntColumn get confirmedAtUtcMs => integer()();
   IntColumn get deletedAtUtcMs => integer().nullable()();
+  TextColumn get imageRelativePath => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -96,15 +96,33 @@ class AppDatabase extends _$AppDatabase {
   factory AppDatabase.open() => AppDatabase(driftDatabase(name: 'lingosign'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (migrator) => migrator.createAll(),
     onUpgrade: (migrator, from, to) async {
-      throw StateError('No migration defined from schema $from to $to');
+      if (from < 2) {
+        await migrator.alterTable(
+          TableMigration(
+            recognitionHistoryRows,
+            newColumns: [recognitionHistoryRows.imageRelativePath],
+          ),
+        );
+      } else if (from < 3) {
+        await migrator.addColumn(
+          recognitionHistoryRows,
+          recognitionHistoryRows.imageRelativePath,
+        );
+      }
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS history_page_idx ON recognition_history_rows (confirmed_at_utc_ms DESC, id DESC) WHERE deleted_at_utc_ms IS NULL',
+      );
     },
     beforeOpen: (details) async {
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS history_page_idx ON recognition_history_rows (confirmed_at_utc_ms DESC, id DESC) WHERE deleted_at_utc_ms IS NULL',
+      );
       await customStatement('PRAGMA foreign_keys = ON');
       await customStatement('PRAGMA journal_mode = WAL');
       await customStatement('PRAGMA synchronous = FULL');

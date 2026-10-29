@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,39 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lingosign_ai/app/app.dart';
 import 'package:lingosign_ai/app/camera_gateway.dart';
 import 'package:lingosign_ai/features/recognition/domain/entities/recognition_prediction.dart';
+import 'package:lingosign_ai/app/local_data_providers.dart';
+import 'package:lingosign_ai/features/history/domain/entities/recognition_record.dart';
+import 'package:lingosign_ai/features/history/domain/repositories/recognition_history_repository.dart';
+
+class FakeHistory implements RecognitionHistoryRepository {
+  Uint8List? lastPhoto;
+  final records = <RecognitionRecord>[];
+  @override
+  Future<void> saveConfirmed(
+    RecognitionRecord record, {
+    Uint8List? photo,
+  }) async {
+    lastPhoto = photo;
+    records.add(record);
+  }
+
+  @override
+  Stream<List<RecognitionRecord>> watchHistory({
+    int? limit,
+    RecognitionRecord? before,
+  }) => Stream.value(
+    records
+        .where(
+          (record) =>
+              before == null || record.confirmedAt.isBefore(before.confirmedAt),
+        )
+        .take(limit ?? records.length)
+        .toList(),
+  );
+  @override
+  Future<void> delete(String id) async =>
+      records.removeWhere((record) => record.id == id);
+}
 
 class FakeCameraGateway implements CameraGateway {
   FakeCameraGateway({this.nextResult = const CameraOpened()});
@@ -42,16 +76,132 @@ class FakeCameraGateway implements CameraGateway {
   }
 }
 
+class FakePhotoCamera extends FakeCameraGateway implements HistoryPhotoCamera {
+  @override
+  Future<Uint8List?> captureHistoryPhoto() async => Uint8List.fromList([7, 8]);
+}
+
 void main() {
+  testWidgets('opens history photo viewer and closes back to same page', (
+    tester,
+  ) async {
+    final history = FakeHistory();
+    history.records.add(
+      RecognitionRecord(
+        id: 'photo',
+        signCode: 'A',
+        label: 'A',
+        confirmedAt: DateTime.utc(2026),
+        imagePath: '/missing-history-photo.png',
+      ),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [historyRepositoryProvider.overrideWithValue(history)],
+        child: const LingoSignApp(),
+      ),
+    );
+    await tester.tap(find.text('Lịch sử').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Xem ảnh lớn'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ảnh nhận diện: A'), findsOneWidget);
+    expect(find.byType(InteractiveViewer), findsOneWidget);
+    await tester.tap(find.byTooltip('Đóng ảnh'));
+    await tester.pumpAndSettle();
+    expect(find.byType(InteractiveViewer), findsNothing);
+    expect(find.text('Trang 1'), findsOneWidget);
+  });
+  testWidgets('saves photo with each window while camera remains active', (
+    tester,
+  ) async {
+    final camera = FakePhotoCamera();
+    final history = FakeHistory();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          cameraGatewayProvider.overrideWithValue(camera),
+          historyRepositoryProvider.overrideWithValue(history),
+        ],
+        child: const LingoSignApp(),
+      ),
+    );
+    await tester.scrollUntilVisible(find.text('Bắt đầu camera'), 300);
+    await tester.tap(find.text('Bắt đầu camera'));
+    await tester.pumpAndSettle();
+    for (var i = 0; i < 2; i++) {
+      camera.predictionEvents.add(
+        RecognitionPrediction(
+          labelId: 'A',
+          confidence: 0.8,
+          timestamp: DateTime.utc(2026),
+          isStable: false,
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
+    }
+    expect(history.records.length, 2);
+    expect(history.lastPhoto, [7, 8]);
+    expect(camera.closes, 0);
+  });
+
+  testWidgets('history has ten rows per page and supports previous/next', (
+    tester,
+  ) async {
+    final history = FakeHistory();
+    for (var i = 0; i < 12; i++) {
+      history.records.add(
+        RecognitionRecord(
+          id: '$i',
+          signCode: 'A',
+          label: 'Row $i',
+          confirmedAt: DateTime.utc(2026).subtract(Duration(seconds: i)),
+        ),
+      );
+    }
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [historyRepositoryProvider.overrideWithValue(history)],
+        child: const LingoSignApp(),
+      ),
+    );
+    await tester.tap(find.text('Lịch sử').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Trang 1'), findsOneWidget);
+    await tester.tap(find.byTooltip('Trang sau'));
+    await tester.pumpAndSettle();
+    expect(find.text('Trang 2'), findsOneWidget);
+    expect(find.text('Row 10'), findsOneWidget);
+    expect(
+      tester
+          .widget<IconButton>(
+            find.byWidgetPredicate(
+              (widget) => widget is IconButton && widget.tooltip == 'Trang sau',
+            ),
+          )
+          .onPressed,
+      isNull,
+    );
+    await tester.tap(find.byTooltip('Trang trước'));
+    await tester.pumpAndSettle();
+    expect(find.text('Trang 1'), findsOneWidget);
+  });
   testWidgets('shows honest recognition state and navigates between sections', (
     tester,
   ) async {
-    await tester.pumpWidget(const ProviderScope(child: LingoSignApp()));
-
-    expect(
-      find.textContaining('Dự đoán ký hiệu đang thử nghiệm'),
-      findsOneWidget,
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          historyRepositoryProvider.overrideWithValue(FakeHistory()),
+          dictionaryProvider('').overrideWith((ref) async => []),
+        ],
+        child: const LingoSignApp(),
+      ),
     );
+
+    expect(find.textContaining('Mỗi giây'), findsOneWidget);
     await tester.tap(find.text('Từ điển').last);
     await tester.pumpAndSettle();
     expect(
@@ -61,7 +211,7 @@ void main() {
 
     await tester.tap(find.text('Lịch sử').last);
     await tester.pumpAndSettle();
-    expect(find.textContaining('Lịch sử sẽ xuất hiện'), findsOneWidget);
+    expect(find.textContaining('Chưa có kết quả.'), findsOneWidget);
   });
 
   testWidgets('switches Material theme to dark mode', (tester) async {
@@ -127,9 +277,13 @@ void main() {
     tester,
   ) async {
     final camera = FakeCameraGateway();
+    final history = FakeHistory();
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [cameraGatewayProvider.overrideWithValue(camera)],
+        overrides: [
+          cameraGatewayProvider.overrideWithValue(camera),
+          historyRepositoryProvider.overrideWithValue(history),
+        ],
         child: const LingoSignApp(),
       ),
     );
@@ -146,8 +300,11 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.scrollUntilVisible(find.text('Dự đoán thử nghiệm: A (75%)'), 300);
-    expect(find.text('Dự đoán thử nghiệm: A (75%)'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.scrollUntilVisible(find.text('Kết quả: A (75%)'), 300);
+    expect(find.text('Kết quả: A (75%)'), findsOneWidget);
+    expect(history.records.single.label, 'A');
+    expect(camera.closes, 0);
   });
 
   testWidgets('closes camera in background and reopens on resume', (

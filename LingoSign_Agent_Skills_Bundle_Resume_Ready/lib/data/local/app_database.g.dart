@@ -575,9 +575,6 @@ class $RecognitionHistoryRowsTable extends RecognitionHistoryRows
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES sign_entries (code) ON DELETE RESTRICT',
-    ),
   );
   static const VerificationMeta _labelSnapshotMeta = const VerificationMeta(
     'labelSnapshot',
@@ -612,6 +609,18 @@ class $RecognitionHistoryRowsTable extends RecognitionHistoryRows
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _imageRelativePathMeta = const VerificationMeta(
+    'imageRelativePath',
+  );
+  @override
+  late final GeneratedColumn<String> imageRelativePath =
+      GeneratedColumn<String>(
+        'image_relative_path',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -619,6 +628,7 @@ class $RecognitionHistoryRowsTable extends RecognitionHistoryRows
     labelSnapshot,
     confirmedAtUtcMs,
     deletedAtUtcMs,
+    imageRelativePath,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -676,6 +686,15 @@ class $RecognitionHistoryRowsTable extends RecognitionHistoryRows
         ),
       );
     }
+    if (data.containsKey('image_relative_path')) {
+      context.handle(
+        _imageRelativePathMeta,
+        imageRelativePath.isAcceptableOrUnknown(
+          data['image_relative_path']!,
+          _imageRelativePathMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -705,6 +724,10 @@ class $RecognitionHistoryRowsTable extends RecognitionHistoryRows
         DriftSqlType.int,
         data['${effectivePrefix}deleted_at_utc_ms'],
       ),
+      imageRelativePath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}image_relative_path'],
+      ),
     );
   }
 
@@ -724,12 +747,14 @@ class RecognitionHistoryRow extends DataClass
   final String labelSnapshot;
   final int confirmedAtUtcMs;
   final int? deletedAtUtcMs;
+  final String? imageRelativePath;
   const RecognitionHistoryRow({
     required this.id,
     required this.signCode,
     required this.labelSnapshot,
     required this.confirmedAtUtcMs,
     this.deletedAtUtcMs,
+    this.imageRelativePath,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -740,6 +765,9 @@ class RecognitionHistoryRow extends DataClass
     map['confirmed_at_utc_ms'] = Variable<int>(confirmedAtUtcMs);
     if (!nullToAbsent || deletedAtUtcMs != null) {
       map['deleted_at_utc_ms'] = Variable<int>(deletedAtUtcMs);
+    }
+    if (!nullToAbsent || imageRelativePath != null) {
+      map['image_relative_path'] = Variable<String>(imageRelativePath);
     }
     return map;
   }
@@ -753,6 +781,9 @@ class RecognitionHistoryRow extends DataClass
       deletedAtUtcMs: deletedAtUtcMs == null && nullToAbsent
           ? const Value.absent()
           : Value(deletedAtUtcMs),
+      imageRelativePath: imageRelativePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imageRelativePath),
     );
   }
 
@@ -767,6 +798,9 @@ class RecognitionHistoryRow extends DataClass
       labelSnapshot: serializer.fromJson<String>(json['labelSnapshot']),
       confirmedAtUtcMs: serializer.fromJson<int>(json['confirmedAtUtcMs']),
       deletedAtUtcMs: serializer.fromJson<int?>(json['deletedAtUtcMs']),
+      imageRelativePath: serializer.fromJson<String?>(
+        json['imageRelativePath'],
+      ),
     );
   }
   @override
@@ -778,6 +812,7 @@ class RecognitionHistoryRow extends DataClass
       'labelSnapshot': serializer.toJson<String>(labelSnapshot),
       'confirmedAtUtcMs': serializer.toJson<int>(confirmedAtUtcMs),
       'deletedAtUtcMs': serializer.toJson<int?>(deletedAtUtcMs),
+      'imageRelativePath': serializer.toJson<String?>(imageRelativePath),
     };
   }
 
@@ -787,6 +822,7 @@ class RecognitionHistoryRow extends DataClass
     String? labelSnapshot,
     int? confirmedAtUtcMs,
     Value<int?> deletedAtUtcMs = const Value.absent(),
+    Value<String?> imageRelativePath = const Value.absent(),
   }) => RecognitionHistoryRow(
     id: id ?? this.id,
     signCode: signCode ?? this.signCode,
@@ -795,6 +831,9 @@ class RecognitionHistoryRow extends DataClass
     deletedAtUtcMs: deletedAtUtcMs.present
         ? deletedAtUtcMs.value
         : this.deletedAtUtcMs,
+    imageRelativePath: imageRelativePath.present
+        ? imageRelativePath.value
+        : this.imageRelativePath,
   );
   RecognitionHistoryRow copyWithCompanion(
     RecognitionHistoryRowsCompanion data,
@@ -811,6 +850,9 @@ class RecognitionHistoryRow extends DataClass
       deletedAtUtcMs: data.deletedAtUtcMs.present
           ? data.deletedAtUtcMs.value
           : this.deletedAtUtcMs,
+      imageRelativePath: data.imageRelativePath.present
+          ? data.imageRelativePath.value
+          : this.imageRelativePath,
     );
   }
 
@@ -821,7 +863,8 @@ class RecognitionHistoryRow extends DataClass
           ..write('signCode: $signCode, ')
           ..write('labelSnapshot: $labelSnapshot, ')
           ..write('confirmedAtUtcMs: $confirmedAtUtcMs, ')
-          ..write('deletedAtUtcMs: $deletedAtUtcMs')
+          ..write('deletedAtUtcMs: $deletedAtUtcMs, ')
+          ..write('imageRelativePath: $imageRelativePath')
           ..write(')'))
         .toString();
   }
@@ -833,6 +876,7 @@ class RecognitionHistoryRow extends DataClass
     labelSnapshot,
     confirmedAtUtcMs,
     deletedAtUtcMs,
+    imageRelativePath,
   );
   @override
   bool operator ==(Object other) =>
@@ -842,7 +886,8 @@ class RecognitionHistoryRow extends DataClass
           other.signCode == this.signCode &&
           other.labelSnapshot == this.labelSnapshot &&
           other.confirmedAtUtcMs == this.confirmedAtUtcMs &&
-          other.deletedAtUtcMs == this.deletedAtUtcMs);
+          other.deletedAtUtcMs == this.deletedAtUtcMs &&
+          other.imageRelativePath == this.imageRelativePath);
 }
 
 class RecognitionHistoryRowsCompanion
@@ -852,6 +897,7 @@ class RecognitionHistoryRowsCompanion
   final Value<String> labelSnapshot;
   final Value<int> confirmedAtUtcMs;
   final Value<int?> deletedAtUtcMs;
+  final Value<String?> imageRelativePath;
   final Value<int> rowid;
   const RecognitionHistoryRowsCompanion({
     this.id = const Value.absent(),
@@ -859,6 +905,7 @@ class RecognitionHistoryRowsCompanion
     this.labelSnapshot = const Value.absent(),
     this.confirmedAtUtcMs = const Value.absent(),
     this.deletedAtUtcMs = const Value.absent(),
+    this.imageRelativePath = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   RecognitionHistoryRowsCompanion.insert({
@@ -867,6 +914,7 @@ class RecognitionHistoryRowsCompanion
     required String labelSnapshot,
     required int confirmedAtUtcMs,
     this.deletedAtUtcMs = const Value.absent(),
+    this.imageRelativePath = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        signCode = Value(signCode),
@@ -878,6 +926,7 @@ class RecognitionHistoryRowsCompanion
     Expression<String>? labelSnapshot,
     Expression<int>? confirmedAtUtcMs,
     Expression<int>? deletedAtUtcMs,
+    Expression<String>? imageRelativePath,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -886,6 +935,7 @@ class RecognitionHistoryRowsCompanion
       if (labelSnapshot != null) 'label_snapshot': labelSnapshot,
       if (confirmedAtUtcMs != null) 'confirmed_at_utc_ms': confirmedAtUtcMs,
       if (deletedAtUtcMs != null) 'deleted_at_utc_ms': deletedAtUtcMs,
+      if (imageRelativePath != null) 'image_relative_path': imageRelativePath,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -896,6 +946,7 @@ class RecognitionHistoryRowsCompanion
     Value<String>? labelSnapshot,
     Value<int>? confirmedAtUtcMs,
     Value<int?>? deletedAtUtcMs,
+    Value<String?>? imageRelativePath,
     Value<int>? rowid,
   }) {
     return RecognitionHistoryRowsCompanion(
@@ -904,6 +955,7 @@ class RecognitionHistoryRowsCompanion
       labelSnapshot: labelSnapshot ?? this.labelSnapshot,
       confirmedAtUtcMs: confirmedAtUtcMs ?? this.confirmedAtUtcMs,
       deletedAtUtcMs: deletedAtUtcMs ?? this.deletedAtUtcMs,
+      imageRelativePath: imageRelativePath ?? this.imageRelativePath,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -926,6 +978,9 @@ class RecognitionHistoryRowsCompanion
     if (deletedAtUtcMs.present) {
       map['deleted_at_utc_ms'] = Variable<int>(deletedAtUtcMs.value);
     }
+    if (imageRelativePath.present) {
+      map['image_relative_path'] = Variable<String>(imageRelativePath.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -940,6 +995,7 @@ class RecognitionHistoryRowsCompanion
           ..write('labelSnapshot: $labelSnapshot, ')
           ..write('confirmedAtUtcMs: $confirmedAtUtcMs, ')
           ..write('deletedAtUtcMs: $deletedAtUtcMs, ')
+          ..write('imageRelativePath: $imageRelativePath, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2085,36 +2141,6 @@ typedef $$SignEntriesTableUpdateCompanionBuilder =
       Value<int> rowid,
     });
 
-final class $$SignEntriesTableReferences
-    extends BaseReferences<_$AppDatabase, $SignEntriesTable, SignEntryRow> {
-  $$SignEntriesTableReferences(super.$_db, super.$_table, super.$_typedResult);
-
-  static MultiTypedResultKey<
-    $RecognitionHistoryRowsTable,
-    List<RecognitionHistoryRow>
-  >
-  _recognitionHistoryRowsRefsTable(_$AppDatabase db) =>
-      MultiTypedResultKey.fromTable(
-        db.recognitionHistoryRows,
-        aliasName: 'sign_entries__code__recognition_history_rows__sign_code',
-      );
-
-  $$RecognitionHistoryRowsTableProcessedTableManager
-  get recognitionHistoryRowsRefs {
-    final manager = $$RecognitionHistoryRowsTableTableManager(
-      $_db,
-      $_db.recognitionHistoryRows,
-    ).filter((f) => f.signCode.code.sqlEquals($_itemColumn<String>('code')!));
-
-    final cache = $_typedResult.readTableOrNull(
-      _recognitionHistoryRowsRefsTable($_db),
-    );
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-}
-
 class $$SignEntriesTableFilterComposer
     extends Composer<_$AppDatabase, $SignEntriesTable> {
   $$SignEntriesTableFilterComposer({
@@ -2163,32 +2189,6 @@ class $$SignEntriesTableFilterComposer
     column: $table.updatedAtUtcMs,
     builder: (column) => ColumnFilters(column),
   );
-
-  Expression<bool> recognitionHistoryRowsRefs(
-    Expression<bool> Function($$RecognitionHistoryRowsTableFilterComposer f) f,
-  ) {
-    final $$RecognitionHistoryRowsTableFilterComposer composer =
-        $composerBuilder(
-          composer: this,
-          getCurrentColumn: (t) => t.code,
-          referencedTable: $db.recognitionHistoryRows,
-          getReferencedColumn: (t) => t.signCode,
-          builder:
-              (
-                joinBuilder, {
-                $addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer,
-              }) => $$RecognitionHistoryRowsTableFilterComposer(
-                $db: $db,
-                $table: $db.recognitionHistoryRows,
-                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                joinBuilder: joinBuilder,
-                $removeJoinBuilderFromRootComposer:
-                    $removeJoinBuilderFromRootComposer,
-              ),
-        );
-    return f(composer);
-  }
 }
 
 class $$SignEntriesTableOrderingComposer
@@ -2283,32 +2283,6 @@ class $$SignEntriesTableAnnotationComposer
     column: $table.updatedAtUtcMs,
     builder: (column) => column,
   );
-
-  Expression<T> recognitionHistoryRowsRefs<T extends Object>(
-    Expression<T> Function($$RecognitionHistoryRowsTableAnnotationComposer a) f,
-  ) {
-    final $$RecognitionHistoryRowsTableAnnotationComposer composer =
-        $composerBuilder(
-          composer: this,
-          getCurrentColumn: (t) => t.code,
-          referencedTable: $db.recognitionHistoryRows,
-          getReferencedColumn: (t) => t.signCode,
-          builder:
-              (
-                joinBuilder, {
-                $addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer,
-              }) => $$RecognitionHistoryRowsTableAnnotationComposer(
-                $db: $db,
-                $table: $db.recognitionHistoryRows,
-                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                joinBuilder: joinBuilder,
-                $removeJoinBuilderFromRootComposer:
-                    $removeJoinBuilderFromRootComposer,
-              ),
-        );
-    return f(composer);
-  }
 }
 
 class $$SignEntriesTableTableManager
@@ -2322,9 +2296,12 @@ class $$SignEntriesTableTableManager
           $$SignEntriesTableAnnotationComposer,
           $$SignEntriesTableCreateCompanionBuilder,
           $$SignEntriesTableUpdateCompanionBuilder,
-          (SignEntryRow, $$SignEntriesTableReferences),
+          (
+            SignEntryRow,
+            BaseReferences<_$AppDatabase, $SignEntriesTable, SignEntryRow>,
+          ),
           SignEntryRow,
-          PrefetchHooks Function({bool recognitionHistoryRowsRefs})
+          PrefetchHooks Function()
         > {
   $$SignEntriesTableTableManager(_$AppDatabase db, $SignEntriesTable table)
     : super(
@@ -2385,42 +2362,15 @@ class $$SignEntriesTableTableManager
               .map(
                 (e) => (
                   e.readTable<$SignEntriesTable, SignEntryRow>(table),
-                  $$SignEntriesTableReferences(db, table, e),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $SignEntriesTable,
+                    SignEntryRow
+                  >(db, table, e),
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({recognitionHistoryRowsRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [
-                if (recognitionHistoryRowsRefs) db.recognitionHistoryRows,
-              ],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (recognitionHistoryRowsRefs)
-                    await $_getPrefetchedData<
-                      SignEntryRow,
-                      $SignEntriesTable,
-                      RecognitionHistoryRow
-                    >(
-                      currentTable: table,
-                      referencedTable: $$SignEntriesTableReferences
-                          ._recognitionHistoryRowsRefsTable(db),
-                      managerFromTypedResult: (p0) =>
-                          $$SignEntriesTableReferences(
-                            db,
-                            table,
-                            p0,
-                          ).recognitionHistoryRowsRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.signCode == item.code),
-                      typedResults: items,
-                    ),
-                ];
-              },
-            );
-          },
+          prefetchHooksCallback: null,
         ),
       );
 }
@@ -2435,9 +2385,12 @@ typedef $$SignEntriesTableProcessedTableManager =
       $$SignEntriesTableAnnotationComposer,
       $$SignEntriesTableCreateCompanionBuilder,
       $$SignEntriesTableUpdateCompanionBuilder,
-      (SignEntryRow, $$SignEntriesTableReferences),
+      (
+        SignEntryRow,
+        BaseReferences<_$AppDatabase, $SignEntriesTable, SignEntryRow>,
+      ),
       SignEntryRow,
-      PrefetchHooks Function({bool recognitionHistoryRowsRefs})
+      PrefetchHooks Function()
     >;
 typedef $$RecognitionHistoryRowsTableCreateCompanionBuilder =
     RecognitionHistoryRowsCompanion Function({
@@ -2446,6 +2399,7 @@ typedef $$RecognitionHistoryRowsTableCreateCompanionBuilder =
       required String labelSnapshot,
       required int confirmedAtUtcMs,
       Value<int?> deletedAtUtcMs,
+      Value<String?> imageRelativePath,
       Value<int> rowid,
     });
 typedef $$RecognitionHistoryRowsTableUpdateCompanionBuilder =
@@ -2455,39 +2409,9 @@ typedef $$RecognitionHistoryRowsTableUpdateCompanionBuilder =
       Value<String> labelSnapshot,
       Value<int> confirmedAtUtcMs,
       Value<int?> deletedAtUtcMs,
+      Value<String?> imageRelativePath,
       Value<int> rowid,
     });
-
-final class $$RecognitionHistoryRowsTableReferences
-    extends
-        BaseReferences<
-          _$AppDatabase,
-          $RecognitionHistoryRowsTable,
-          RecognitionHistoryRow
-        > {
-  $$RecognitionHistoryRowsTableReferences(
-    super.$_db,
-    super.$_table,
-    super.$_typedResult,
-  );
-
-  static $SignEntriesTable _signCodeTable(_$AppDatabase db) => db.signEntries
-      .createAlias('recognition_history_rows__sign_code__sign_entries__code');
-
-  $$SignEntriesTableProcessedTableManager get signCode {
-    final $_column = $_itemColumn<String>('sign_code')!;
-
-    final manager = $$SignEntriesTableTableManager(
-      $_db,
-      $_db.signEntries,
-    ).filter((f) => f.code.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_signCodeTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-}
 
 class $$RecognitionHistoryRowsTableFilterComposer
     extends Composer<_$AppDatabase, $RecognitionHistoryRowsTable> {
@@ -2500,6 +2424,11 @@ class $$RecognitionHistoryRowsTableFilterComposer
   });
   ColumnFilters<String> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get signCode => $composableBuilder(
+    column: $table.signCode,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2518,28 +2447,10 @@ class $$RecognitionHistoryRowsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  $$SignEntriesTableFilterComposer get signCode {
-    final $$SignEntriesTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.signCode,
-      referencedTable: $db.signEntries,
-      getReferencedColumn: (t) => t.code,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$SignEntriesTableFilterComposer(
-            $db: $db,
-            $table: $db.signEntries,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
+  ColumnFilters<String> get imageRelativePath => $composableBuilder(
+    column: $table.imageRelativePath,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$RecognitionHistoryRowsTableOrderingComposer
@@ -2553,6 +2464,11 @@ class $$RecognitionHistoryRowsTableOrderingComposer
   });
   ColumnOrderings<String> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get signCode => $composableBuilder(
+    column: $table.signCode,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -2571,28 +2487,10 @@ class $$RecognitionHistoryRowsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  $$SignEntriesTableOrderingComposer get signCode {
-    final $$SignEntriesTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.signCode,
-      referencedTable: $db.signEntries,
-      getReferencedColumn: (t) => t.code,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$SignEntriesTableOrderingComposer(
-            $db: $db,
-            $table: $db.signEntries,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
+  ColumnOrderings<String> get imageRelativePath => $composableBuilder(
+    column: $table.imageRelativePath,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$RecognitionHistoryRowsTableAnnotationComposer
@@ -2606,6 +2504,9 @@ class $$RecognitionHistoryRowsTableAnnotationComposer
   });
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get signCode =>
+      $composableBuilder(column: $table.signCode, builder: (column) => column);
 
   GeneratedColumn<String> get labelSnapshot => $composableBuilder(
     column: $table.labelSnapshot,
@@ -2622,28 +2523,10 @@ class $$RecognitionHistoryRowsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  $$SignEntriesTableAnnotationComposer get signCode {
-    final $$SignEntriesTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.signCode,
-      referencedTable: $db.signEntries,
-      getReferencedColumn: (t) => t.code,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$SignEntriesTableAnnotationComposer(
-            $db: $db,
-            $table: $db.signEntries,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
+  GeneratedColumn<String> get imageRelativePath => $composableBuilder(
+    column: $table.imageRelativePath,
+    builder: (column) => column,
+  );
 }
 
 class $$RecognitionHistoryRowsTableTableManager
@@ -2657,9 +2540,16 @@ class $$RecognitionHistoryRowsTableTableManager
           $$RecognitionHistoryRowsTableAnnotationComposer,
           $$RecognitionHistoryRowsTableCreateCompanionBuilder,
           $$RecognitionHistoryRowsTableUpdateCompanionBuilder,
-          (RecognitionHistoryRow, $$RecognitionHistoryRowsTableReferences),
+          (
+            RecognitionHistoryRow,
+            BaseReferences<
+              _$AppDatabase,
+              $RecognitionHistoryRowsTable,
+              RecognitionHistoryRow
+            >,
+          ),
           RecognitionHistoryRow,
-          PrefetchHooks Function({bool signCode})
+          PrefetchHooks Function()
         > {
   $$RecognitionHistoryRowsTableTableManager(
     _$AppDatabase db,
@@ -2690,6 +2580,7 @@ class $$RecognitionHistoryRowsTableTableManager
                 Value<String> labelSnapshot = const Value.absent(),
                 Value<int> confirmedAtUtcMs = const Value.absent(),
                 Value<int?> deletedAtUtcMs = const Value.absent(),
+                Value<String?> imageRelativePath = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => RecognitionHistoryRowsCompanion(
                 id: id,
@@ -2697,6 +2588,7 @@ class $$RecognitionHistoryRowsTableTableManager
                 labelSnapshot: labelSnapshot,
                 confirmedAtUtcMs: confirmedAtUtcMs,
                 deletedAtUtcMs: deletedAtUtcMs,
+                imageRelativePath: imageRelativePath,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -2706,6 +2598,7 @@ class $$RecognitionHistoryRowsTableTableManager
                 required String labelSnapshot,
                 required int confirmedAtUtcMs,
                 Value<int?> deletedAtUtcMs = const Value.absent(),
+                Value<String?> imageRelativePath = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => RecognitionHistoryRowsCompanion.insert(
                 id: id,
@@ -2713,6 +2606,7 @@ class $$RecognitionHistoryRowsTableTableManager
                 labelSnapshot: labelSnapshot,
                 confirmedAtUtcMs: confirmedAtUtcMs,
                 deletedAtUtcMs: deletedAtUtcMs,
+                imageRelativePath: imageRelativePath,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -2722,50 +2616,15 @@ class $$RecognitionHistoryRowsTableTableManager
                     $RecognitionHistoryRowsTable,
                     RecognitionHistoryRow
                   >(table),
-                  $$RecognitionHistoryRowsTableReferences(db, table, e),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $RecognitionHistoryRowsTable,
+                    RecognitionHistoryRow
+                  >(db, table, e),
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({signCode = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (signCode) {
-                      state = state.withJoin(
-                        currentTable: table,
-                        currentColumn: table.signCode,
-                        referencedTable: $$RecognitionHistoryRowsTableReferences
-                            ._signCodeTable(db),
-                        referencedColumn:
-                            $$RecognitionHistoryRowsTableReferences
-                                ._signCodeTable(db)
-                                .code,
-                      ) as T;
-                    }
-
-                    return state;
-                  },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
+          prefetchHooksCallback: null,
         ),
       );
 }
@@ -2780,9 +2639,16 @@ typedef $$RecognitionHistoryRowsTableProcessedTableManager =
       $$RecognitionHistoryRowsTableAnnotationComposer,
       $$RecognitionHistoryRowsTableCreateCompanionBuilder,
       $$RecognitionHistoryRowsTableUpdateCompanionBuilder,
-      (RecognitionHistoryRow, $$RecognitionHistoryRowsTableReferences),
+      (
+        RecognitionHistoryRow,
+        BaseReferences<
+          _$AppDatabase,
+          $RecognitionHistoryRowsTable,
+          RecognitionHistoryRow
+        >,
+      ),
       RecognitionHistoryRow,
-      PrefetchHooks Function({bool signCode})
+      PrefetchHooks Function()
     >;
 typedef $$PendingSyncOpsTableCreateCompanionBuilder =
     PendingSyncOpsCompanion Function({

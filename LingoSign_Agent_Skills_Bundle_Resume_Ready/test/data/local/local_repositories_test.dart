@@ -48,7 +48,7 @@ void main() {
         ),
       );
 
-      expect(database.schemaVersion, 1);
+      expect(database.schemaVersion, 3);
       expect((await dictionary.search('thử nghiệm')).single.code, fixture.code);
       expect((await history.watchHistory().first).single.id, 'record-1');
       await database.close();
@@ -67,7 +67,7 @@ void main() {
       final version = await database
           .customSelect('PRAGMA user_version')
           .getSingle();
-      expect(version.read<int>('user_version'), 1);
+      expect(version.read<int>('user_version'), 3);
     },
   );
 
@@ -89,20 +89,63 @@ void main() {
     },
   );
 
-  test('foreign key rejects history for an unknown sign', () async {
+  test('saves model labels before dictionary content is available', () async {
     final history = LocalRecognitionHistoryRepository(database);
-    await expectLater(
-      history.saveConfirmed(
+    await history.saveConfirmed(
+      RecognitionRecord(
+        id: 'invalid',
+        signCode: 'MISSING',
+        label: 'Unknown',
+        confirmedAt: DateTime.utc(2026),
+      ),
+    );
+    expect((await history.watchHistory().first).single.signCode, 'MISSING');
+  });
+
+  test('upgrades v1 history without losing existing rows', () async {
+    await database.customStatement(
+      'CREATE TABLE IF NOT EXISTS sign_entries (code TEXT PRIMARY KEY)',
+    );
+    // Use a separate v1 database to exercise the real upgrade path.
+    final legacyFile = File('${tempDirectory.path}/legacy.sqlite');
+    final legacy = NativeDatabase(legacyFile);
+    final legacyDb = AppDatabase(legacy);
+    await legacyDb.customStatement('SELECT 1');
+    await legacyDb.customStatement(
+      'ALTER TABLE recognition_history_rows RENAME TO history_v2',
+    );
+    await legacyDb.customStatement(
+      'CREATE TABLE recognition_history_rows (id TEXT NOT NULL PRIMARY KEY, sign_code TEXT NOT NULL REFERENCES sign_entries(code), label_snapshot TEXT NOT NULL, confirmed_at_utc_ms INTEGER NOT NULL, deleted_at_utc_ms INTEGER) STRICT',
+    );
+    await legacyDb.customStatement('DROP TABLE history_v2');
+    await legacyDb.customStatement(
+      "INSERT INTO sign_entries (code, label_vi, catalog_version, source_url, license_name, updated_at_utc_ms) VALUES ('TEST', 'Fixture', 'test', 'https://example.test', 'test-only', 0)",
+    );
+    await legacyDb.customStatement(
+      "INSERT INTO recognition_history_rows VALUES ('old', 'TEST', 'Fixture', 0, NULL)",
+    );
+    await legacyDb.customStatement('PRAGMA user_version = 1');
+    await legacyDb.close();
+    final upgraded = AppDatabase(NativeDatabase(legacyFile));
+    try {
+      final history = LocalRecognitionHistoryRepository(upgraded);
+      await history.saveConfirmed(
         RecognitionRecord(
-          id: 'invalid',
-          signCode: 'MISSING',
-          label: 'Unknown',
+          id: 'auto',
+          signCode: 'A',
+          label: 'A',
           confirmedAt: DateTime.utc(2026),
         ),
-      ),
-      throwsA(isA<Exception>()),
-    );
-    expect(await history.watchHistory().first, isEmpty);
+      );
+      final records = await history.watchHistory().first;
+      expect(records.map((record) => record.id), containsAll(['auto', 'old']));
+      final keys = await upgraded
+          .customSelect('PRAGMA foreign_key_list(recognition_history_rows)')
+          .get();
+      expect(keys, isEmpty);
+    } finally {
+      await upgraded.close();
+    }
   });
 
   test('delete hides history with tombstone and preserves catalog', () async {

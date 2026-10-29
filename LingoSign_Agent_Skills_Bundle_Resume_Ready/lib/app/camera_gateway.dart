@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -30,3 +32,7 @@ abstract interface class CameraGateway {
 final cameraGatewayProvider = Provider<CameraGateway>(
   (ref) => throw UnimplementedError('Override cameraGatewayProvider in main'),
 );
+
+abstract interface class HistoryPhotoCamera {
+  Future<Uint8List?> captureHistoryPhoto();
+}

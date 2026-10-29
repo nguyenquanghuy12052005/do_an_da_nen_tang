@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:camera/camera.dart';
 import 'package:flutter/widgets.dart';
@@ -9,7 +12,45 @@ import '../../domain/entities/recognition_prediction.dart';
 import '../model/hand_feature_extractor.dart';
 import '../model/offline_forest_model.dart';
 
-class CameraPluginGateway implements CameraGateway {
+class CameraPluginGateway implements CameraGateway, HistoryPhotoCamera {
+  Future<Uint8List?>? _photoTask;
+
+  @override
+  Future<Uint8List?> captureHistoryPhoto() {
+    return _photoTask ??= _capturePhoto().whenComplete(() => _photoTask = null);
+  }
+
+  Future<Uint8List?> _capturePhoto() async {
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized) return null;
+    File? temporaryFile;
+    ui.Codec? codec;
+    ui.Image? thumbnail;
+    try {
+      final photo = await controller.takePicture();
+      temporaryFile = File(photo.path);
+      codec = await ui.instantiateImageCodec(
+        await photo.readAsBytes(),
+        targetWidth: 240,
+      );
+      thumbnail = (await codec.getNextFrame()).image;
+      final bytes = await thumbnail.toByteData(format: ui.ImageByteFormat.png);
+      return bytes?.buffer.asUint8List();
+    } catch (_) {
+      return null;
+    } finally {
+      thumbnail?.dispose();
+      codec?.dispose();
+      if (temporaryFile != null) {
+        try {
+          await temporaryFile.delete();
+        } on FileSystemException {
+          /* Already removed. */
+        }
+      }
+    }
+  }
+
   CameraController? _controller;
   HandLandmarkerPlugin? _landmarker;
   StreamSubscription<List<Hand>>? _handSubscription;
@@ -130,6 +171,7 @@ class CameraPluginGateway implements CameraGateway {
 
   @override
   Future<void> close() async {
+    await _photoTask;
     _generation++;
     final controller = _controller;
     _controller = null;

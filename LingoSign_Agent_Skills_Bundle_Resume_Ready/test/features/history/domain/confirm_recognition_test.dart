@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lingosign_ai/features/dictionary/domain/entities/sign_entry.dart';
 import 'package:lingosign_ai/features/dictionary/domain/repositories/sign_dictionary_repository.dart';
@@ -149,10 +151,16 @@ class _FakeHistory implements RecognitionHistoryRepository {
   final saved = <RecognitionRecord>[];
 
   @override
-  Stream<List<RecognitionRecord>> watchHistory() => Stream.value(saved);
+  Stream<List<RecognitionRecord>> watchHistory({
+    int? limit,
+    RecognitionRecord? before,
+  }) => Stream.value(saved);
 
   @override
-  Future<void> saveConfirmed(RecognitionRecord record) async {
+  Future<void> saveConfirmed(
+    RecognitionRecord record, {
+    Uint8List? photo,
+  }) async {
     saved.add(record);
   }
 
