@@ -18,9 +18,6 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
 final historyRepositoryProvider = Provider<RecognitionHistoryRepository>(
   (ref) => LocalRecognitionHistoryRepository(ref.watch(appDatabaseProvider)),
 );
-final historyProvider = StreamProvider<List<RecognitionRecord>>(
-  (ref) => ref.watch(historyRepositoryProvider).watchHistory(),
-);
 final historyPageProvider = StreamProvider.autoDispose
     .family<List<RecognitionRecord>, RecognitionRecord?>(
       (ref, before) => ref

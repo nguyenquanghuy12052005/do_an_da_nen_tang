@@ -6,7 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lingosign_ai/data/local/app_database.dart';
 import 'package:lingosign_ai/data/local/repositories/local_recognition_history_repository.dart';
 import 'package:lingosign_ai/data/local/repositories/local_sync_repository.dart';
-import 'package:lingosign_ai/features/history/domain/entities/recognition_record.dart';
+
+import '../../fixtures/recognition_record_fixture.dart';
+
 import 'package:lingosign_ai/features/sync/domain/entities/sync_operation.dart';
 import 'package:lingosign_ai/features/sync/domain/repositories/sync_remote.dart';
 
@@ -37,13 +39,6 @@ class FakeRemote implements SyncRemote {
     );
   }
 }
-
-RecognitionRecord record(String id) => RecognitionRecord(
-  id: id,
-  signCode: 'A',
-  label: 'A',
-  confirmedAt: DateTime.utc(2026),
-);
 
 void main() {
   late Directory directory;

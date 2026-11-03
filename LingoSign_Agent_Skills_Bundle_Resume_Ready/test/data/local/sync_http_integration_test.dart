@@ -9,7 +9,7 @@ import 'package:lingosign_ai/data/local/repositories/local_sync_repository.dart'
 import 'package:lingosign_ai/features/sync/data/http_sync_remote.dart';
 import 'package:lingosign_ai/features/sync/domain/entities/sync_operation.dart';
 
-import 'offline_sync_test.dart' show record;
+import '../../fixtures/recognition_record_fixture.dart';
 
 void main() {
   test('real HTTP + Python SQLite server: 2 clients, offline writes, retry, pull, tombstones, auth, idempotency and server restart', () async {
