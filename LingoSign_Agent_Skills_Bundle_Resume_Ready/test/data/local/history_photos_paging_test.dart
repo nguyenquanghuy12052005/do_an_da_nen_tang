@@ -106,6 +106,9 @@ void main() {
   test('v2 migration adds nullable photo without losing history', () async {
     await db.customStatement('SELECT 1');
     await db.customStatement(
+      'ALTER TABLE pending_sync_ops DROP COLUMN next_attempt_at_utc_ms',
+    );
+    await db.customStatement(
       'ALTER TABLE recognition_history_rows DROP COLUMN image_relative_path',
     );
     await db.customStatement(

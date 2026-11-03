@@ -48,7 +48,7 @@ void main() {
         ),
       );
 
-      expect(database.schemaVersion, 3);
+      expect(database.schemaVersion, 4);
       expect((await dictionary.search('thử nghiệm')).single.code, fixture.code);
       expect((await history.watchHistory().first).single.id, 'record-1');
       await database.close();
@@ -67,7 +67,7 @@ void main() {
       final version = await database
           .customSelect('PRAGMA user_version')
           .getSingle();
-      expect(version.read<int>('user_version'), 3);
+      expect(version.read<int>('user_version'), 4);
     },
   );
 
@@ -125,6 +125,9 @@ void main() {
       "INSERT INTO recognition_history_rows VALUES ('old', 'TEST', 'Fixture', 0, NULL)",
     );
     await legacyDb.customStatement('PRAGMA user_version = 1');
+    await legacyDb.customStatement(
+      'ALTER TABLE pending_sync_ops DROP COLUMN next_attempt_at_utc_ms',
+    );
     await legacyDb.close();
     final upgraded = AppDatabase(NativeDatabase(legacyFile));
     try {

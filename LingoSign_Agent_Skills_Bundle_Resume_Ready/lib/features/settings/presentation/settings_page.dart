@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lingosign_ai/app/theme/theme_mode_controller.dart';
 
+import '../../sync/presentation/sync_settings.dart';
+
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
@@ -10,6 +12,7 @@ class SettingsPage extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListView(
       children: [
+        const SyncSettings(),
         SwitchListTile(
           title: const Text('Chế độ tối'),
           subtitle: const Text('Chỉ áp dụng trong phiên sử dụng này'),

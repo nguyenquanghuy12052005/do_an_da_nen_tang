@@ -8,6 +8,22 @@
 
 ## 0. TÓM TẮT QUYẾT ĐỊNH
 
+### Phạm vi M3 điều chỉnh theo người dùng — 03/11/2026
+
+SQLite cho M2 đã được giảng viên chấp thuận theo xác nhận của người dùng.
+Giữ mô hình MediaPipe + PCA/Random Forest; thay đổi framework AI hoãn lại.
+Đồng bộ dùng máy chủ demo SQLite trên máy tính, không triển khai Supabase/Auth/RLS.
+Các mục Supabase và đánh giá nghiên cứu ở kế hoạch gốc bên dưới không được tự đánh dấu hoàn thành.
+
+- [x] Outbox cùng transaction với ghi/xóa lịch sử; tồn tại qua restart.
+- [x] Đồng bộ metadata hai chiều qua HTTP thật với máy chủ Python/SQLite.
+- [x] Retry/backoff bền vững, idempotency, tombstone và incremental cursor.
+- [x] Bật/tắt theo đồng thuận, số chờ, thông báo lỗi và tự thử lại khi app đang mở.
+- [x] Automated tests: 44 Flutter tests (có HTTP integration hai client), 4 Python tests đạt ngày 03/11/2026.
+- [x] Schema v4/migration, analyze sạch và build APK Android debug có sync thành công.
+- [x] Có hướng dẫn tái lập demo và bằng chứng ở docs/agent/M3_DEMO.md và TEST_EVIDENCE.md.
+- [ ] Người dùng trình diễn trên Android và quay video nghiệm thu offline/reconnect; ADB hiện không có thiết bị.
+
 | Mục | Quyết định |
 |---|---|
 | Tên đồ án | **LingoSign AI — Ứng dụng nhận diện và hỗ trợ giao tiếp bằng ngôn ngữ ký hiệu** |

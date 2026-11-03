@@ -4,11 +4,14 @@ import 'package:lingosign_ai/app/router.dart';
 import 'package:lingosign_ai/app/theme/app_theme.dart';
 import 'package:lingosign_ai/app/theme/theme_mode_controller.dart';
 
+import 'sync_providers.dart';
+
 class LingoSignApp extends ConsumerWidget {
   const LingoSignApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(syncControllerProvider);
     return MaterialApp.router(
       title: 'LingoSign AI',
       debugShowCheckedModeBanner: false,

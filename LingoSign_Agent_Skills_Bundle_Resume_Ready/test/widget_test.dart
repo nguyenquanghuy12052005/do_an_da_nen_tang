@@ -82,6 +82,70 @@ class FakePhotoCamera extends FakeCameraGateway implements HistoryPhotoCamera {
 }
 
 void main() {
+  testWidgets('progress, weak rejection and optional duplicate suppression', (
+    tester,
+  ) async {
+    final camera = FakeCameraGateway();
+    final history = FakeHistory();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          cameraGatewayProvider.overrideWithValue(camera),
+          historyRepositoryProvider.overrideWithValue(history),
+        ],
+        child: const LingoSignApp(),
+      ),
+    );
+    await tester.scrollUntilVisible(
+      find.text('Tránh lưu ký hiệu trùng liên tiếp'),
+      300,
+    );
+    await tester.tap(find.byType(SwitchListTile));
+    await tester.scrollUntilVisible(find.text('Bắt đầu camera'), 300);
+    await tester.tap(find.text('Bắt đầu camera'));
+    await tester.pumpAndSettle();
+    Future<void> emit(String? label, double confidence) async {
+      camera.predictionEvents.add(
+        RecognitionPrediction(
+          labelId: label,
+          confidence: confidence,
+          timestamp: DateTime.utc(2026),
+          isStable: false,
+        ),
+      );
+      await tester.pump();
+    }
+
+    await emit('A', .4);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(
+      tester
+          .widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator))
+          .value,
+      closeTo(.5, .1),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(history.records, isEmpty);
+    expect(find.textContaining('Chưa chắc chắn'), findsOneWidget);
+    await emit('A', .8);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    expect(history.records.length, 1);
+    await emit('A', .9);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    expect(history.records.length, 1);
+    await emit(null, 0);
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.textContaining('Chưa thấy bàn tay'), findsOneWidget);
+    await emit('A', .9);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    expect(history.records.length, 2);
+    expect(camera.closes, 0);
+    await tester.pumpWidget(const SizedBox());
+    await camera.predictionEvents.close();
+  });
   testWidgets('opens history photo viewer and closes back to same page', (
     tester,
   ) async {
@@ -201,7 +265,7 @@ void main() {
       ),
     );
 
-    expect(find.textContaining('Mỗi giây'), findsOneWidget);
+    expect(find.textContaining('Mỗi lượt lấy mẫu 1 giây'), findsOneWidget);
     await tester.tap(find.text('Từ điển').last);
     await tester.pumpAndSettle();
     expect(

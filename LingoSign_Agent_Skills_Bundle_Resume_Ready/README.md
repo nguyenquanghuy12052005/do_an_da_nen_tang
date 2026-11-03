@@ -14,12 +14,19 @@ The received model artifacts and remaining contract questions are in
 
 ## Development
 
+M3 now includes opt-in, metadata-only bidirectional sync to a local Python/SQLite
+demo server, a transactional durable outbox, retry/backoff, idempotency and
+deletion tombstones. See [M3 demo and verification](docs/agent/M3_DEMO.md) for
+the two PowerShell commands, consent switch and offline/reconnect scenario.
+AI framework replacement is explicitly deferred. No camera images are uploaded.
+
 History now shows 10 records per page with previous/next controls. Each
 one-second recognition window saves its maximum-confidence label and attempts
 to capture a 240-pixel-wide thumbnail at the end of that window. Photos remain
 in app-private storage; deleting a history row also removes its photo. Older
 rows and capture failures display an image placeholder. Schema v3 migrates
-existing history without wiping it. Camera capture while streaming still needs
+existing history without wiping it. Schema v4 adds persistent sync retry timing.
+Camera capture while streaming still needs
 physical-device validation.
 
 From this directory, with Flutter 3.47.5 or a compatible stable SDK:

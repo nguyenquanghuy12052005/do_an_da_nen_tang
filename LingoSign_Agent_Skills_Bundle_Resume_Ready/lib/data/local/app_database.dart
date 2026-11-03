@@ -47,6 +47,8 @@ class PendingSyncOps extends Table {
   IntColumn get createdAtUtcMs => integer()();
   IntColumn get retryCount => integer().withDefault(const Constant(0))();
   TextColumn get lastError => text().nullable()();
+  IntColumn get nextAttemptAtUtcMs =>
+      integer().withDefault(const Constant(0))();
 
   @override
   Set<Column> get primaryKey => {opId};
@@ -96,12 +98,18 @@ class AppDatabase extends _$AppDatabase {
   factory AppDatabase.open() => AppDatabase(driftDatabase(name: 'lingosign'));
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (migrator) => migrator.createAll(),
     onUpgrade: (migrator, from, to) async {
+      if (from < 4) {
+        await migrator.addColumn(
+          pendingSyncOps,
+          pendingSyncOps.nextAttemptAtUtcMs,
+        );
+      }
       if (from < 2) {
         await migrator.alterTable(
           TableMigration(

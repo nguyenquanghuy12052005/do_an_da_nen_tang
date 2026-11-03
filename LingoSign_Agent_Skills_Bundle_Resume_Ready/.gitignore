@@ -1,4 +1,9 @@
 # Miscellaneous
+.sync-demo/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+__pycache__/
 *.class
 *.log
 *.pyc

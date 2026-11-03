@@ -1,5 +1,17 @@
 # Test evidence
 
+## M3 / TASK-012 — 2026-11-03 (Asia/Bangkok)
+
+- Scope: user-approved local SQLite demo sync server; keep existing AI, defer framework replacement. Existing recognition UX changes preserved.
+- `dart run build_runner build`: PASS; schema v4 adds persistent next retry timestamp; `dart run drift_dev schema dump lib/data/local/app_database.dart drift_schemas/`: PASS, v4 snapshot added.
+- `dart format lib test`: PASS. Final `flutter analyze --no-pub`: PASS, no issues (11.6s).
+- Final `flutter test --no-pub --reporter compact`: PASS, **44 tests**. Includes durable queue/restart/backoff, lost ACK, serial sync, transaction rollback, tombstone, malformed-page rollback, v1/v2/v3 upgrades, settings UI and actual HTTP/Python SQLite two-client integration. Integration explicitly disables Flutter test's fake HTTP client only within that test, restores it afterward, uses temporary fixture data and stops server in finally.
+- `python tool/sync_server/test_server.py`: PASS, **4 tests**. Pagination/restart, idempotency/delete-first, payload conflict, rejecting image fields and invalid timestamps. Fixed Python SQLite connection closure after initial ResourceWarning/locked temporary directory failure.
+- First Flutter run found stale schema-version expectations and incorrect HTTP Content-Length. Both fixed; real HTTP integration and final full suite passed afterward. Drift's multiple-database warning is expected from isolated fixture databases; executors are distinct.
+- `flutter build apk --debug --no-pub --target-platform android-x64 --dart-define=SYNC_URL=http://10.0.2.2:8765 --dart-define=SYNC_TOKEN=build-verification-token-only`: PASS (32.3s), build/app/outputs/flutter-apk/app-debug.apk. Token in this build is an explicit test fixture; run-app.ps1 rebuilds using the locally generated demo token.
+- Both persistence skill check scripts PASS (confinement, no DB file copy/OFFSET, pragmas). Both PowerShell launcher files parse successfully. `git diff --check`: PASS (line-ending conversion notices only).
+- `adb devices`: no connected devices. Android runtime UI/network/airplane-mode tests NOT_RUN. No new real-data AI accuracy/F1 measured; no production release, deployment or GitHub Actions run claimed. Commands/scripts and human demo steps: M3_DEMO.md.
+
 ## TASK-001 — 2026-10-17 (Asia/Bangkok)
 
 - Environment: Windows; Flutter 3.47.5, Dart 3.13.4 installed under parent workspace `.tooling/flutter`; app package `lingosign_ai`.

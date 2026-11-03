@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../../features/history/domain/entities/recognition_record.dart';
 import '../../../features/history/domain/repositories/recognition_history_repository.dart';
 import '../app_database.dart';
+import '../sync_outbox.dart';
 
 class LocalRecognitionHistoryRepository
     implements RecognitionHistoryRepository {
@@ -82,6 +83,13 @@ class LocalRecognitionHistoryRepository
                     .millisecondsSinceEpoch,
               ),
             );
+        await enqueueHistory(database, {
+          'id': record.id,
+          'signCode': record.signCode,
+          'label': record.label,
+          'confirmedAt': record.confirmedAt.toUtc().millisecondsSinceEpoch,
+          'deletedAt': null,
+        }, deleted: false);
       });
     } catch (_) {
       if (image != null && await image.exists()) await image.delete();
@@ -98,17 +106,21 @@ class LocalRecognitionHistoryRepository
         ? null
         : await _photoFile(row!.imageRelativePath!);
     await database.transaction(() async {
+      if (row == null || row.deletedAtUtcMs != null) return;
+      final deletedAt = DateTime.now().toUtc().millisecondsSinceEpoch;
       await (database.update(database.recognitionHistoryRows)..where(
             (table) => table.id.equals(id) & table.deletedAtUtcMs.isNull(),
           ))
           .write(
             RecognitionHistoryRowsCompanion(
-              deletedAtUtcMs: Value(
-                DateTime.now().toUtc().millisecondsSinceEpoch,
-              ),
+              deletedAtUtcMs: Value(deletedAt),
               imageRelativePath: const Value(null),
             ),
           );
+      await enqueueHistory(database, {
+        ...historyPayload(row),
+        'deletedAt': deletedAt,
+      }, deleted: true);
     });
     if (image != null && await image.exists()) await image.delete();
   }

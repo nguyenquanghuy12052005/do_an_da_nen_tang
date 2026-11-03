@@ -1093,6 +1093,17 @@ class $PendingSyncOpsTable extends PendingSyncOps
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _nextAttemptAtUtcMsMeta =
+      const VerificationMeta('nextAttemptAtUtcMs');
+  @override
+  late final GeneratedColumn<int> nextAttemptAtUtcMs = GeneratedColumn<int>(
+    'next_attempt_at_utc_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     opId,
@@ -1103,6 +1114,7 @@ class $PendingSyncOpsTable extends PendingSyncOps
     createdAtUtcMs,
     retryCount,
     lastError,
+    nextAttemptAtUtcMs,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1182,6 +1194,15 @@ class $PendingSyncOpsTable extends PendingSyncOps
         lastError.isAcceptableOrUnknown(data['last_error']!, _lastErrorMeta),
       );
     }
+    if (data.containsKey('next_attempt_at_utc_ms')) {
+      context.handle(
+        _nextAttemptAtUtcMsMeta,
+        nextAttemptAtUtcMs.isAcceptableOrUnknown(
+          data['next_attempt_at_utc_ms']!,
+          _nextAttemptAtUtcMsMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1223,6 +1244,10 @@ class $PendingSyncOpsTable extends PendingSyncOps
         DriftSqlType.string,
         data['${effectivePrefix}last_error'],
       ),
+      nextAttemptAtUtcMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}next_attempt_at_utc_ms'],
+      )!,
     );
   }
 
@@ -1245,6 +1270,7 @@ class PendingSyncOpRow extends DataClass
   final int createdAtUtcMs;
   final int retryCount;
   final String? lastError;
+  final int nextAttemptAtUtcMs;
   const PendingSyncOpRow({
     required this.opId,
     required this.entity,
@@ -1254,6 +1280,7 @@ class PendingSyncOpRow extends DataClass
     required this.createdAtUtcMs,
     required this.retryCount,
     this.lastError,
+    required this.nextAttemptAtUtcMs,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1268,6 +1295,7 @@ class PendingSyncOpRow extends DataClass
     if (!nullToAbsent || lastError != null) {
       map['last_error'] = Variable<String>(lastError);
     }
+    map['next_attempt_at_utc_ms'] = Variable<int>(nextAttemptAtUtcMs);
     return map;
   }
 
@@ -1283,6 +1311,7 @@ class PendingSyncOpRow extends DataClass
       lastError: lastError == null && nullToAbsent
           ? const Value.absent()
           : Value(lastError),
+      nextAttemptAtUtcMs: Value(nextAttemptAtUtcMs),
     );
   }
 
@@ -1300,6 +1329,7 @@ class PendingSyncOpRow extends DataClass
       createdAtUtcMs: serializer.fromJson<int>(json['createdAtUtcMs']),
       retryCount: serializer.fromJson<int>(json['retryCount']),
       lastError: serializer.fromJson<String?>(json['lastError']),
+      nextAttemptAtUtcMs: serializer.fromJson<int>(json['nextAttemptAtUtcMs']),
     );
   }
   @override
@@ -1314,6 +1344,7 @@ class PendingSyncOpRow extends DataClass
       'createdAtUtcMs': serializer.toJson<int>(createdAtUtcMs),
       'retryCount': serializer.toJson<int>(retryCount),
       'lastError': serializer.toJson<String?>(lastError),
+      'nextAttemptAtUtcMs': serializer.toJson<int>(nextAttemptAtUtcMs),
     };
   }
 
@@ -1326,6 +1357,7 @@ class PendingSyncOpRow extends DataClass
     int? createdAtUtcMs,
     int? retryCount,
     Value<String?> lastError = const Value.absent(),
+    int? nextAttemptAtUtcMs,
   }) => PendingSyncOpRow(
     opId: opId ?? this.opId,
     entity: entity ?? this.entity,
@@ -1335,6 +1367,7 @@ class PendingSyncOpRow extends DataClass
     createdAtUtcMs: createdAtUtcMs ?? this.createdAtUtcMs,
     retryCount: retryCount ?? this.retryCount,
     lastError: lastError.present ? lastError.value : this.lastError,
+    nextAttemptAtUtcMs: nextAttemptAtUtcMs ?? this.nextAttemptAtUtcMs,
   );
   PendingSyncOpRow copyWithCompanion(PendingSyncOpsCompanion data) {
     return PendingSyncOpRow(
@@ -1352,6 +1385,9 @@ class PendingSyncOpRow extends DataClass
           ? data.retryCount.value
           : this.retryCount,
       lastError: data.lastError.present ? data.lastError.value : this.lastError,
+      nextAttemptAtUtcMs: data.nextAttemptAtUtcMs.present
+          ? data.nextAttemptAtUtcMs.value
+          : this.nextAttemptAtUtcMs,
     );
   }
 
@@ -1365,7 +1401,8 @@ class PendingSyncOpRow extends DataClass
           ..write('payloadJson: $payloadJson, ')
           ..write('createdAtUtcMs: $createdAtUtcMs, ')
           ..write('retryCount: $retryCount, ')
-          ..write('lastError: $lastError')
+          ..write('lastError: $lastError, ')
+          ..write('nextAttemptAtUtcMs: $nextAttemptAtUtcMs')
           ..write(')'))
         .toString();
   }
@@ -1380,6 +1417,7 @@ class PendingSyncOpRow extends DataClass
     createdAtUtcMs,
     retryCount,
     lastError,
+    nextAttemptAtUtcMs,
   );
   @override
   bool operator ==(Object other) =>
@@ -1392,7 +1430,8 @@ class PendingSyncOpRow extends DataClass
           other.payloadJson == this.payloadJson &&
           other.createdAtUtcMs == this.createdAtUtcMs &&
           other.retryCount == this.retryCount &&
-          other.lastError == this.lastError);
+          other.lastError == this.lastError &&
+          other.nextAttemptAtUtcMs == this.nextAttemptAtUtcMs);
 }
 
 class PendingSyncOpsCompanion extends UpdateCompanion<PendingSyncOpRow> {
@@ -1404,6 +1443,7 @@ class PendingSyncOpsCompanion extends UpdateCompanion<PendingSyncOpRow> {
   final Value<int> createdAtUtcMs;
   final Value<int> retryCount;
   final Value<String?> lastError;
+  final Value<int> nextAttemptAtUtcMs;
   final Value<int> rowid;
   const PendingSyncOpsCompanion({
     this.opId = const Value.absent(),
@@ -1414,6 +1454,7 @@ class PendingSyncOpsCompanion extends UpdateCompanion<PendingSyncOpRow> {
     this.createdAtUtcMs = const Value.absent(),
     this.retryCount = const Value.absent(),
     this.lastError = const Value.absent(),
+    this.nextAttemptAtUtcMs = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PendingSyncOpsCompanion.insert({
@@ -1425,6 +1466,7 @@ class PendingSyncOpsCompanion extends UpdateCompanion<PendingSyncOpRow> {
     required int createdAtUtcMs,
     this.retryCount = const Value.absent(),
     this.lastError = const Value.absent(),
+    this.nextAttemptAtUtcMs = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : opId = Value(opId),
        entity = Value(entity),
@@ -1441,6 +1483,7 @@ class PendingSyncOpsCompanion extends UpdateCompanion<PendingSyncOpRow> {
     Expression<int>? createdAtUtcMs,
     Expression<int>? retryCount,
     Expression<String>? lastError,
+    Expression<int>? nextAttemptAtUtcMs,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1452,6 +1495,8 @@ class PendingSyncOpsCompanion extends UpdateCompanion<PendingSyncOpRow> {
       if (createdAtUtcMs != null) 'created_at_utc_ms': createdAtUtcMs,
       if (retryCount != null) 'retry_count': retryCount,
       if (lastError != null) 'last_error': lastError,
+      if (nextAttemptAtUtcMs != null)
+        'next_attempt_at_utc_ms': nextAttemptAtUtcMs,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1465,6 +1510,7 @@ class PendingSyncOpsCompanion extends UpdateCompanion<PendingSyncOpRow> {
     Value<int>? createdAtUtcMs,
     Value<int>? retryCount,
     Value<String?>? lastError,
+    Value<int>? nextAttemptAtUtcMs,
     Value<int>? rowid,
   }) {
     return PendingSyncOpsCompanion(
@@ -1476,6 +1522,7 @@ class PendingSyncOpsCompanion extends UpdateCompanion<PendingSyncOpRow> {
       createdAtUtcMs: createdAtUtcMs ?? this.createdAtUtcMs,
       retryCount: retryCount ?? this.retryCount,
       lastError: lastError ?? this.lastError,
+      nextAttemptAtUtcMs: nextAttemptAtUtcMs ?? this.nextAttemptAtUtcMs,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1507,6 +1554,9 @@ class PendingSyncOpsCompanion extends UpdateCompanion<PendingSyncOpRow> {
     if (lastError.present) {
       map['last_error'] = Variable<String>(lastError.value);
     }
+    if (nextAttemptAtUtcMs.present) {
+      map['next_attempt_at_utc_ms'] = Variable<int>(nextAttemptAtUtcMs.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1524,6 +1574,7 @@ class PendingSyncOpsCompanion extends UpdateCompanion<PendingSyncOpRow> {
           ..write('createdAtUtcMs: $createdAtUtcMs, ')
           ..write('retryCount: $retryCount, ')
           ..write('lastError: $lastError, ')
+          ..write('nextAttemptAtUtcMs: $nextAttemptAtUtcMs, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2660,6 +2711,7 @@ typedef $$PendingSyncOpsTableCreateCompanionBuilder =
       required int createdAtUtcMs,
       Value<int> retryCount,
       Value<String?> lastError,
+      Value<int> nextAttemptAtUtcMs,
       Value<int> rowid,
     });
 typedef $$PendingSyncOpsTableUpdateCompanionBuilder =
@@ -2672,6 +2724,7 @@ typedef $$PendingSyncOpsTableUpdateCompanionBuilder =
       Value<int> createdAtUtcMs,
       Value<int> retryCount,
       Value<String?> lastError,
+      Value<int> nextAttemptAtUtcMs,
       Value<int> rowid,
     });
 
@@ -2721,6 +2774,11 @@ class $$PendingSyncOpsTableFilterComposer
 
   ColumnFilters<String> get lastError => $composableBuilder(
     column: $table.lastError,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get nextAttemptAtUtcMs => $composableBuilder(
+    column: $table.nextAttemptAtUtcMs,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2773,6 +2831,11 @@ class $$PendingSyncOpsTableOrderingComposer
     column: $table.lastError,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get nextAttemptAtUtcMs => $composableBuilder(
+    column: $table.nextAttemptAtUtcMs,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$PendingSyncOpsTableAnnotationComposer
@@ -2813,6 +2876,11 @@ class $$PendingSyncOpsTableAnnotationComposer
 
   GeneratedColumn<String> get lastError =>
       $composableBuilder(column: $table.lastError, builder: (column) => column);
+
+  GeneratedColumn<int> get nextAttemptAtUtcMs => $composableBuilder(
+    column: $table.nextAttemptAtUtcMs,
+    builder: (column) => column,
+  );
 }
 
 class $$PendingSyncOpsTableTableManager
@@ -2860,6 +2928,7 @@ class $$PendingSyncOpsTableTableManager
                 Value<int> createdAtUtcMs = const Value.absent(),
                 Value<int> retryCount = const Value.absent(),
                 Value<String?> lastError = const Value.absent(),
+                Value<int> nextAttemptAtUtcMs = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PendingSyncOpsCompanion(
                 opId: opId,
@@ -2870,6 +2939,7 @@ class $$PendingSyncOpsTableTableManager
                 createdAtUtcMs: createdAtUtcMs,
                 retryCount: retryCount,
                 lastError: lastError,
+                nextAttemptAtUtcMs: nextAttemptAtUtcMs,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -2882,6 +2952,7 @@ class $$PendingSyncOpsTableTableManager
                 required int createdAtUtcMs,
                 Value<int> retryCount = const Value.absent(),
                 Value<String?> lastError = const Value.absent(),
+                Value<int> nextAttemptAtUtcMs = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PendingSyncOpsCompanion.insert(
                 opId: opId,
@@ -2892,6 +2963,7 @@ class $$PendingSyncOpsTableTableManager
                 createdAtUtcMs: createdAtUtcMs,
                 retryCount: retryCount,
                 lastError: lastError,
+                nextAttemptAtUtcMs: nextAttemptAtUtcMs,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
