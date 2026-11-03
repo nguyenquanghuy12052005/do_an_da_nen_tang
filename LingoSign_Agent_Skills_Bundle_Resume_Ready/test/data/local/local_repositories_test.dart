@@ -48,7 +48,7 @@ void main() {
         ),
       );
 
-      expect(database.schemaVersion, 4);
+      expect(database.schemaVersion, 7);
       expect((await dictionary.search('thử nghiệm')).single.code, fixture.code);
       expect((await history.watchHistory().first).single.id, 'record-1');
       await database.close();
@@ -67,7 +67,7 @@ void main() {
       final version = await database
           .customSelect('PRAGMA user_version')
           .getSingle();
-      expect(version.read<int>('user_version'), 4);
+      expect(version.read<int>('user_version'), 7);
     },
   );
 

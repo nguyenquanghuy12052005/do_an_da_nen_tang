@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 
 import '../../../features/dictionary/domain/entities/sign_entry.dart';
@@ -65,6 +67,7 @@ class LocalSignDictionaryRepository implements SignDictionaryRepository {
                 code: entry.code,
                 labelVi: entry.label,
                 description: Value(entry.description),
+                detailsJson: Value(jsonEncode(entry.details)),
                 catalogVersion: catalogVersion,
                 sourceUrl: sourceUrl,
                 licenseName: licenseName,
@@ -75,9 +78,22 @@ class LocalSignDictionaryRepository implements SignDictionaryRepository {
     });
   }
 
-  SignEntry _toEntity(SignEntryRow row) => SignEntry(
-    code: row.code,
-    label: row.labelVi,
-    description: row.description,
-  );
+  SignEntry _toEntity(SignEntryRow row) {
+    final details = row.detailsJson == null
+        ? <String, dynamic>{}
+        : jsonDecode(row.detailsJson!) as Map<String, dynamic>;
+    return SignEntry(
+      code: row.code,
+      label: row.labelVi,
+      description: row.description,
+      category: details['category'] as String? ?? 'Khác',
+      signSystem: details['signSystem'] as String? ?? '',
+      instructions: details['instructions'] as String? ?? '',
+      imageAsset: details['imageAsset'] as String?,
+      videoAsset: details['videoAsset'] as String?,
+      modelLabel: details['modelLabel'] as String?,
+      sourceUrl: row.sourceUrl,
+      licenseName: row.licenseName,
+    );
+  }
 }

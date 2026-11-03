@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:go_router/go_router.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lingosign_ai/app/camera_gateway.dart';
@@ -99,6 +101,7 @@ class _HomePageState extends ConsumerState<HomePage>
       signCode: best.labelId!,
       label: best.labelId!,
       confirmedAt: now,
+      confidence: best.confidence,
     );
     final repository = ref.read(historyRepositoryProvider);
     final camera = _gateway;
@@ -277,6 +280,31 @@ class _HomePageState extends ConsumerState<HomePage>
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        OutlinedButton.icon(
+          onPressed: () => context.push('/practice'),
+          icon: const Icon(Icons.school_outlined),
+          label: const Text('Luyện tập và kiểm tra'),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: const [
+            Chip(
+              avatar: Icon(Icons.shield_outlined, size: 18),
+              backgroundColor: Color(0xFFD9F4E9),
+              labelStyle: TextStyle(color: Color(0xFF14533E)),
+              label: Text('Xử lý trên thiết bị'),
+            ),
+            Chip(
+              avatar: Icon(Icons.timer_outlined, size: 18),
+              backgroundColor: Color(0xFFFFE9C3),
+              labelStyle: TextStyle(color: Color(0xFF704507)),
+              label: Text('Lấy mẫu 1 giây'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
         Text(
           'Nhận diện ký hiệu',
           style: Theme.of(context).textTheme.headlineSmall,
@@ -286,16 +314,70 @@ class _HomePageState extends ConsumerState<HomePage>
           'Giữ toàn bộ bàn tay trong khung hình, đủ sáng và tránh che các ngón tay. Mỗi lượt lấy mẫu 1 giây; kết quả có độ tin cậy từ 60% được lưu cùng ảnh. Camera tiếp tục chạy cho đến khi bạn bấm dừng.',
         ),
         const SizedBox(height: 16),
+        if (_message != null) ...[
+          Text(
+            _message!,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+          const SizedBox(height: 8),
+        ],
+        FilledButton.icon(
+          onPressed: _opening ? null : (_active ? _stopCamera : _startCamera),
+          icon: Icon(_active ? Icons.stop : Icons.videocam),
+          label: Text(_active ? 'Dừng camera' : 'Bắt đầu camera'),
+        ),
+        const SizedBox(height: 16),
         AspectRatio(
-          aspectRatio: 3 / 4,
+          aspectRatio: preview == null
+              ? 1 / MediaQuery.textScalerOf(context).scale(1)
+              : 1,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: ColoredBox(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(28),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color.alphaBlend(
+                      const Color(0xFF8B6EE8).withValues(alpha: .30),
+                      Theme.of(context).colorScheme.surface,
+                    ),
+                    Color.alphaBlend(
+                      const Color(0xFF20C6AB).withValues(alpha: .25),
+                      Theme.of(context).colorScheme.surface,
+                    ),
+                    Color.alphaBlend(
+                      const Color(0xFFFFBA42).withValues(alpha: .26),
+                      Theme.of(context).colorScheme.surface,
+                    ),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
               child:
                   preview ??
-                  const Center(
-                    child: Icon(Icons.videocam_off_outlined, size: 56),
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.sign_language_outlined,
+                          size: 72,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Sẵn sàng nhận diện',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Bấm bắt đầu và đưa tay vào khung hình',
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
                   ),
             ),
           ),
@@ -337,25 +419,6 @@ class _HomePageState extends ConsumerState<HomePage>
           }),
         ),
         if (_opening) const Center(child: CircularProgressIndicator()),
-        if (_message != null) ...[
-          Text(
-            _message!,
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
-          ),
-          const SizedBox(height: 8),
-        ],
-        if (_active)
-          FilledButton.icon(
-            onPressed: _stopCamera,
-            icon: const Icon(Icons.stop),
-            label: const Text('Dừng camera'),
-          )
-        else
-          FilledButton.icon(
-            onPressed: _opening ? null : _startCamera,
-            icon: const Icon(Icons.videocam),
-            label: const Text('Bắt đầu camera'),
-          ),
       ],
     );
   }

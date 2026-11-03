@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/local_data_providers.dart';
+import '../../../app/design_components.dart';
 import '../domain/entities/recognition_record.dart';
 import 'history_photo_viewer.dart';
+import 'history_review_sheet.dart';
 
 class HistoryPage extends ConsumerStatefulWidget {
   const HistoryPage({super.key});
@@ -16,6 +18,13 @@ class HistoryPage extends ConsumerStatefulWidget {
 class _HistoryPageState extends ConsumerState<HistoryPage> {
   final _cursors = <RecognitionRecord?>[null];
   final _scroll = ScrollController();
+  HistoryFilter _filter = const HistoryFilter();
+  void _filterBy(HistoryFilter filter) => _move(() {
+    _filter = filter;
+    _cursors
+      ..clear()
+      ..add(null);
+  });
   void _move(VoidCallback change) {
     setState(change);
     if (_scroll.hasClients) _scroll.jumpTo(0);
@@ -29,17 +38,27 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
 
   @override
   Widget build(BuildContext context) => ref
-      .watch(historyPageProvider(_cursors.last))
+      .watch(
+        filteredHistoryPageProvider((before: _cursors.last, filter: _filter)),
+      )
       .when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const SectionHeading(
+                title: 'Những ký hiệu đã lưu',
+                subtitle: 'Xem lại từng khoảnh khắc. Chạm vào ảnh để phóng to.',
+              ),
               const Text('Không tải được lịch sử.'),
               TextButton(
-                onPressed: () =>
-                    ref.invalidate(historyPageProvider(_cursors.last)),
+                onPressed: () => ref.invalidate(
+                  filteredHistoryPageProvider((
+                    before: _cursors.last,
+                    filter: _filter,
+                  )),
+                ),
                 child: const Text('Thử lại'),
               ),
             ],
@@ -49,25 +68,121 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
           final visible = records.take(10).toList();
           return Column(
             children: [
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'Tìm trong lịch sử',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                      onSubmitted: (query) => _filterBy(
+                        HistoryFilter(
+                          query: query,
+                          day: _filter.day,
+                          favoritesOnly: _filter.favoritesOnly,
+                        ),
+                      ),
+                    ),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        FilterChip(
+                          label: const Text('Yêu thích'),
+                          selected: _filter.favoritesOnly,
+                          onSelected: (value) => _filterBy(
+                            HistoryFilter(
+                              query: _filter.query,
+                              day: _filter.day,
+                              favoritesOnly: value,
+                            ),
+                          ),
+                        ),
+                        ActionChip(
+                          label: Text(
+                            _filter.day == null
+                                ? 'Chọn ngày'
+                                : '${_filter.day!.day}/${_filter.day!.month}/${_filter.day!.year}',
+                          ),
+                          avatar: const Icon(
+                            Icons.calendar_today_outlined,
+                            size: 18,
+                          ),
+                          onPressed: () async {
+                            final day = await showDatePicker(
+                              context: context,
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime.now(),
+                              initialDate: _filter.day ?? DateTime.now(),
+                            );
+                            if (mounted && day != null) {
+                              _filterBy(
+                                HistoryFilter(
+                                  query: _filter.query,
+                                  day: day,
+                                  favoritesOnly: _filter.favoritesOnly,
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                        if (_filter.day != null)
+                          ActionChip(
+                            label: const Text('Bỏ lọc ngày'),
+                            onPressed: () => _filterBy(
+                              HistoryFilter(
+                                query: _filter.query,
+                                favoritesOnly: _filter.favoritesOnly,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
               Expanded(
                 child: visible.isEmpty
-                    ? const Center(
-                        child: Text('Chưa có kết quả. Hãy bắt đầu nhận diện.'),
+                    ? const EmptyPanel(
+                        icon: Icons.history_rounded,
+                        message: 'Chưa có kết quả. Hãy bắt đầu nhận diện.',
                       )
                     : ListView.separated(
                         controller: _scroll,
                         padding: const EdgeInsets.all(12),
                         itemCount: visible.length,
-                        separatorBuilder: (context, index) => const Divider(),
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           final record = visible[index];
                           return ListTile(
+                            onTap: () => showModalBottomSheet<void>(
+                              context: context,
+                              isScrollControlled: true,
+                              showDragHandle: true,
+                              builder: (context) =>
+                                  HistoryReviewSheet(record: record),
+                            ),
+                            tileColor: Theme.of(context).colorScheme.surface,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outlineVariant,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
                             key: ValueKey(record.id),
                             leading: SizedBox(
                               width: 64,
                               height: 64,
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(14),
                                 child: record.imagePath == null
                                     ? const Icon(
                                         Icons.image_not_supported_outlined,

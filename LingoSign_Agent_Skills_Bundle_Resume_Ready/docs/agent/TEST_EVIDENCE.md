@@ -1,5 +1,16 @@
 # Test evidence
 
+## Learning / review expansion — 2026-11-03
+
+- Practice phase: domain/SQLite + 5-question widget loop PASS (3 tests), then progress math PASS (4 learning tests); each phase tested before continuing.
+- History: combined SQL filter/pagination/original-confidence preservation test PASS, full51 PASS before dictionary phase.
+- Dictionary: provenance/metadata persistence and unsupported-practice gating tests PASS; actual v4→v7 migration/reopen PASS. Catalog intentionally empty pending user-provided media, no fake instructional content.
+- Final `dart format lib test` PASS; `flutter analyze --no-pub` PASS, no issues (12.3s); full `flutter test --no-pub --reporter compact` PASS **55**. Includes late camera-open/background regression, unchanged offline HTTP sync tests and existing UI layout/font tests.
+- `python tool/sync_server/test_server.py`: PASS **4**.
+- Codegen + schema v7 dump PASS. Final `flutter build apk --debug --no-pub --target-platform android-x64`: PASS (16s). Both persistence checks and `git diff --check` PASS, line-ending notices only.
+- Intermediate compile/lint/test failures were fixed, including null-aware collection style, lifecycle API void await and asset cache/fake-async test isolation. Production practice now shares one actual-label provider; tests inject fixture labels.
+- No Android runtime/video playback or new model accuracy measurement performed. New learning sessions and review metadata are local-only; original M3 history sync unchanged. See LEARNING_FEATURES.md for acceptance walkthrough and content schema.
+
 ## M3 / TASK-012 — 2026-11-03 (Asia/Bangkok)
 
 - Scope: user-approved local SQLite demo sync server; keep existing AI, defer framework replacement. Existing recognition UX changes preserved.

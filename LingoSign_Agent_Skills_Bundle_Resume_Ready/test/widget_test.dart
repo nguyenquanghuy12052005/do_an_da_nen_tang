@@ -27,6 +27,7 @@ class FakeHistory implements RecognitionHistoryRepository {
   Stream<List<RecognitionRecord>> watchHistory({
     int? limit,
     RecognitionRecord? before,
+    HistoryFilter filter = const HistoryFilter(),
   }) => Stream.value(
     records
         .where(
@@ -39,6 +40,13 @@ class FakeHistory implements RecognitionHistoryRepository {
   @override
   Future<void> delete(String id) async =>
       records.removeWhere((record) => record.id == id);
+  @override
+  Future<void> updateReview(
+    String id, {
+    bool? favorite,
+    bool? incorrect,
+    String? note,
+  }) async {}
 }
 
 class FakeCameraGateway implements CameraGateway {
@@ -100,8 +108,11 @@ void main() {
       find.text('Tránh lưu ký hiệu trùng liên tiếp'),
       300,
     );
+    await tester.ensureVisible(find.byType(SwitchListTile));
+    await tester.pumpAndSettle();
     await tester.tap(find.byType(SwitchListTile));
-    await tester.scrollUntilVisible(find.text('Bắt đầu camera'), 300);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Bắt đầu camera'), -300);
     await tester.tap(find.text('Bắt đầu camera'));
     await tester.pumpAndSettle();
     Future<void> emit(String? label, double confidence) async {
@@ -116,6 +127,7 @@ void main() {
       await tester.pump();
     }
 
+    await tester.scrollUntilVisible(find.byType(LinearProgressIndicator), 300);
     await emit('A', .4);
     await tester.pump(const Duration(milliseconds: 500));
     expect(
@@ -309,7 +321,6 @@ void main() {
     expect(find.byKey(const Key('fake-camera-preview')), findsOneWidget);
 
     await tester.scrollUntilVisible(find.text('Dừng camera'), 300);
-    await tester.drag(find.byType(ListView).first, const Offset(0, -150));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Dừng camera'));
     await tester.pump(const Duration(milliseconds: 100));

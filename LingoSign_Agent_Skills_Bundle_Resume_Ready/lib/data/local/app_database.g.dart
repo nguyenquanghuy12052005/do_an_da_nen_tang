@@ -40,6 +40,17 @@ class $SignEntriesTable extends SignEntries
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _detailsJsonMeta = const VerificationMeta(
+    'detailsJson',
+  );
+  @override
+  late final GeneratedColumn<String> detailsJson = GeneratedColumn<String>(
+    'details_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _mediaLocalPathMeta = const VerificationMeta(
     'mediaLocalPath',
   );
@@ -100,6 +111,7 @@ class $SignEntriesTable extends SignEntries
     code,
     labelVi,
     description,
+    detailsJson,
     mediaLocalPath,
     catalogVersion,
     sourceUrl,
@@ -140,6 +152,15 @@ class $SignEntriesTable extends SignEntries
         description.isAcceptableOrUnknown(
           data['description']!,
           _descriptionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('details_json')) {
+      context.handle(
+        _detailsJsonMeta,
+        detailsJson.isAcceptableOrUnknown(
+          data['details_json']!,
+          _detailsJsonMeta,
         ),
       );
     }
@@ -214,6 +235,10 @@ class $SignEntriesTable extends SignEntries
         DriftSqlType.string,
         data['${effectivePrefix}description'],
       ),
+      detailsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}details_json'],
+      ),
       mediaLocalPath: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}media_local_path'],
@@ -250,6 +275,7 @@ class SignEntryRow extends DataClass implements Insertable<SignEntryRow> {
   final String code;
   final String labelVi;
   final String? description;
+  final String? detailsJson;
   final String? mediaLocalPath;
   final String catalogVersion;
   final String sourceUrl;
@@ -259,6 +285,7 @@ class SignEntryRow extends DataClass implements Insertable<SignEntryRow> {
     required this.code,
     required this.labelVi,
     this.description,
+    this.detailsJson,
     this.mediaLocalPath,
     required this.catalogVersion,
     required this.sourceUrl,
@@ -272,6 +299,9 @@ class SignEntryRow extends DataClass implements Insertable<SignEntryRow> {
     map['label_vi'] = Variable<String>(labelVi);
     if (!nullToAbsent || description != null) {
       map['description'] = Variable<String>(description);
+    }
+    if (!nullToAbsent || detailsJson != null) {
+      map['details_json'] = Variable<String>(detailsJson);
     }
     if (!nullToAbsent || mediaLocalPath != null) {
       map['media_local_path'] = Variable<String>(mediaLocalPath);
@@ -290,6 +320,9 @@ class SignEntryRow extends DataClass implements Insertable<SignEntryRow> {
       description: description == null && nullToAbsent
           ? const Value.absent()
           : Value(description),
+      detailsJson: detailsJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(detailsJson),
       mediaLocalPath: mediaLocalPath == null && nullToAbsent
           ? const Value.absent()
           : Value(mediaLocalPath),
@@ -309,6 +342,7 @@ class SignEntryRow extends DataClass implements Insertable<SignEntryRow> {
       code: serializer.fromJson<String>(json['code']),
       labelVi: serializer.fromJson<String>(json['labelVi']),
       description: serializer.fromJson<String?>(json['description']),
+      detailsJson: serializer.fromJson<String?>(json['detailsJson']),
       mediaLocalPath: serializer.fromJson<String?>(json['mediaLocalPath']),
       catalogVersion: serializer.fromJson<String>(json['catalogVersion']),
       sourceUrl: serializer.fromJson<String>(json['sourceUrl']),
@@ -323,6 +357,7 @@ class SignEntryRow extends DataClass implements Insertable<SignEntryRow> {
       'code': serializer.toJson<String>(code),
       'labelVi': serializer.toJson<String>(labelVi),
       'description': serializer.toJson<String?>(description),
+      'detailsJson': serializer.toJson<String?>(detailsJson),
       'mediaLocalPath': serializer.toJson<String?>(mediaLocalPath),
       'catalogVersion': serializer.toJson<String>(catalogVersion),
       'sourceUrl': serializer.toJson<String>(sourceUrl),
@@ -335,6 +370,7 @@ class SignEntryRow extends DataClass implements Insertable<SignEntryRow> {
     String? code,
     String? labelVi,
     Value<String?> description = const Value.absent(),
+    Value<String?> detailsJson = const Value.absent(),
     Value<String?> mediaLocalPath = const Value.absent(),
     String? catalogVersion,
     String? sourceUrl,
@@ -344,6 +380,7 @@ class SignEntryRow extends DataClass implements Insertable<SignEntryRow> {
     code: code ?? this.code,
     labelVi: labelVi ?? this.labelVi,
     description: description.present ? description.value : this.description,
+    detailsJson: detailsJson.present ? detailsJson.value : this.detailsJson,
     mediaLocalPath: mediaLocalPath.present
         ? mediaLocalPath.value
         : this.mediaLocalPath,
@@ -359,6 +396,9 @@ class SignEntryRow extends DataClass implements Insertable<SignEntryRow> {
       description: data.description.present
           ? data.description.value
           : this.description,
+      detailsJson: data.detailsJson.present
+          ? data.detailsJson.value
+          : this.detailsJson,
       mediaLocalPath: data.mediaLocalPath.present
           ? data.mediaLocalPath.value
           : this.mediaLocalPath,
@@ -381,6 +421,7 @@ class SignEntryRow extends DataClass implements Insertable<SignEntryRow> {
           ..write('code: $code, ')
           ..write('labelVi: $labelVi, ')
           ..write('description: $description, ')
+          ..write('detailsJson: $detailsJson, ')
           ..write('mediaLocalPath: $mediaLocalPath, ')
           ..write('catalogVersion: $catalogVersion, ')
           ..write('sourceUrl: $sourceUrl, ')
@@ -395,6 +436,7 @@ class SignEntryRow extends DataClass implements Insertable<SignEntryRow> {
     code,
     labelVi,
     description,
+    detailsJson,
     mediaLocalPath,
     catalogVersion,
     sourceUrl,
@@ -408,6 +450,7 @@ class SignEntryRow extends DataClass implements Insertable<SignEntryRow> {
           other.code == this.code &&
           other.labelVi == this.labelVi &&
           other.description == this.description &&
+          other.detailsJson == this.detailsJson &&
           other.mediaLocalPath == this.mediaLocalPath &&
           other.catalogVersion == this.catalogVersion &&
           other.sourceUrl == this.sourceUrl &&
@@ -419,6 +462,7 @@ class SignEntriesCompanion extends UpdateCompanion<SignEntryRow> {
   final Value<String> code;
   final Value<String> labelVi;
   final Value<String?> description;
+  final Value<String?> detailsJson;
   final Value<String?> mediaLocalPath;
   final Value<String> catalogVersion;
   final Value<String> sourceUrl;
@@ -429,6 +473,7 @@ class SignEntriesCompanion extends UpdateCompanion<SignEntryRow> {
     this.code = const Value.absent(),
     this.labelVi = const Value.absent(),
     this.description = const Value.absent(),
+    this.detailsJson = const Value.absent(),
     this.mediaLocalPath = const Value.absent(),
     this.catalogVersion = const Value.absent(),
     this.sourceUrl = const Value.absent(),
@@ -440,6 +485,7 @@ class SignEntriesCompanion extends UpdateCompanion<SignEntryRow> {
     required String code,
     required String labelVi,
     this.description = const Value.absent(),
+    this.detailsJson = const Value.absent(),
     this.mediaLocalPath = const Value.absent(),
     required String catalogVersion,
     required String sourceUrl,
@@ -456,6 +502,7 @@ class SignEntriesCompanion extends UpdateCompanion<SignEntryRow> {
     Expression<String>? code,
     Expression<String>? labelVi,
     Expression<String>? description,
+    Expression<String>? detailsJson,
     Expression<String>? mediaLocalPath,
     Expression<String>? catalogVersion,
     Expression<String>? sourceUrl,
@@ -467,6 +514,7 @@ class SignEntriesCompanion extends UpdateCompanion<SignEntryRow> {
       if (code != null) 'code': code,
       if (labelVi != null) 'label_vi': labelVi,
       if (description != null) 'description': description,
+      if (detailsJson != null) 'details_json': detailsJson,
       if (mediaLocalPath != null) 'media_local_path': mediaLocalPath,
       if (catalogVersion != null) 'catalog_version': catalogVersion,
       if (sourceUrl != null) 'source_url': sourceUrl,
@@ -480,6 +528,7 @@ class SignEntriesCompanion extends UpdateCompanion<SignEntryRow> {
     Value<String>? code,
     Value<String>? labelVi,
     Value<String?>? description,
+    Value<String?>? detailsJson,
     Value<String?>? mediaLocalPath,
     Value<String>? catalogVersion,
     Value<String>? sourceUrl,
@@ -491,6 +540,7 @@ class SignEntriesCompanion extends UpdateCompanion<SignEntryRow> {
       code: code ?? this.code,
       labelVi: labelVi ?? this.labelVi,
       description: description ?? this.description,
+      detailsJson: detailsJson ?? this.detailsJson,
       mediaLocalPath: mediaLocalPath ?? this.mediaLocalPath,
       catalogVersion: catalogVersion ?? this.catalogVersion,
       sourceUrl: sourceUrl ?? this.sourceUrl,
@@ -511,6 +561,9 @@ class SignEntriesCompanion extends UpdateCompanion<SignEntryRow> {
     }
     if (description.present) {
       map['description'] = Variable<String>(description.value);
+    }
+    if (detailsJson.present) {
+      map['details_json'] = Variable<String>(detailsJson.value);
     }
     if (mediaLocalPath.present) {
       map['media_local_path'] = Variable<String>(mediaLocalPath.value);
@@ -539,6 +592,7 @@ class SignEntriesCompanion extends UpdateCompanion<SignEntryRow> {
           ..write('code: $code, ')
           ..write('labelVi: $labelVi, ')
           ..write('description: $description, ')
+          ..write('detailsJson: $detailsJson, ')
           ..write('mediaLocalPath: $mediaLocalPath, ')
           ..write('catalogVersion: $catalogVersion, ')
           ..write('sourceUrl: $sourceUrl, ')
@@ -2145,6 +2199,650 @@ class AppSettingsCompanion extends UpdateCompanion<AppSettingRow> {
   }
 }
 
+class $LearningSessionsTable extends LearningSessions
+    with TableInfo<$LearningSessionsTable, LearningSession> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LearningSessionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payloadJsonMeta = const VerificationMeta(
+    'payloadJson',
+  );
+  @override
+  late final GeneratedColumn<String> payloadJson = GeneratedColumn<String>(
+    'payload_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startedAtUtcMsMeta = const VerificationMeta(
+    'startedAtUtcMs',
+  );
+  @override
+  late final GeneratedColumn<int> startedAtUtcMs = GeneratedColumn<int>(
+    'started_at_utc_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, payloadJson, startedAtUtcMs];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'learning_sessions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LearningSession> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('payload_json')) {
+      context.handle(
+        _payloadJsonMeta,
+        payloadJson.isAcceptableOrUnknown(
+          data['payload_json']!,
+          _payloadJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadJsonMeta);
+    }
+    if (data.containsKey('started_at_utc_ms')) {
+      context.handle(
+        _startedAtUtcMsMeta,
+        startedAtUtcMs.isAcceptableOrUnknown(
+          data['started_at_utc_ms']!,
+          _startedAtUtcMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_startedAtUtcMsMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LearningSession map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LearningSession(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      payloadJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload_json'],
+      )!,
+      startedAtUtcMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}started_at_utc_ms'],
+      )!,
+    );
+  }
+
+  @override
+  $LearningSessionsTable createAlias(String alias) {
+    return $LearningSessionsTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get isStrict => true;
+}
+
+class LearningSession extends DataClass implements Insertable<LearningSession> {
+  final String id;
+  final String payloadJson;
+  final int startedAtUtcMs;
+  const LearningSession({
+    required this.id,
+    required this.payloadJson,
+    required this.startedAtUtcMs,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['payload_json'] = Variable<String>(payloadJson);
+    map['started_at_utc_ms'] = Variable<int>(startedAtUtcMs);
+    return map;
+  }
+
+  LearningSessionsCompanion toCompanion(bool nullToAbsent) {
+    return LearningSessionsCompanion(
+      id: Value(id),
+      payloadJson: Value(payloadJson),
+      startedAtUtcMs: Value(startedAtUtcMs),
+    );
+  }
+
+  factory LearningSession.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LearningSession(
+      id: serializer.fromJson<String>(json['id']),
+      payloadJson: serializer.fromJson<String>(json['payloadJson']),
+      startedAtUtcMs: serializer.fromJson<int>(json['startedAtUtcMs']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'payloadJson': serializer.toJson<String>(payloadJson),
+      'startedAtUtcMs': serializer.toJson<int>(startedAtUtcMs),
+    };
+  }
+
+  LearningSession copyWith({
+    String? id,
+    String? payloadJson,
+    int? startedAtUtcMs,
+  }) => LearningSession(
+    id: id ?? this.id,
+    payloadJson: payloadJson ?? this.payloadJson,
+    startedAtUtcMs: startedAtUtcMs ?? this.startedAtUtcMs,
+  );
+  LearningSession copyWithCompanion(LearningSessionsCompanion data) {
+    return LearningSession(
+      id: data.id.present ? data.id.value : this.id,
+      payloadJson: data.payloadJson.present
+          ? data.payloadJson.value
+          : this.payloadJson,
+      startedAtUtcMs: data.startedAtUtcMs.present
+          ? data.startedAtUtcMs.value
+          : this.startedAtUtcMs,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LearningSession(')
+          ..write('id: $id, ')
+          ..write('payloadJson: $payloadJson, ')
+          ..write('startedAtUtcMs: $startedAtUtcMs')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, payloadJson, startedAtUtcMs);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LearningSession &&
+          other.id == this.id &&
+          other.payloadJson == this.payloadJson &&
+          other.startedAtUtcMs == this.startedAtUtcMs);
+}
+
+class LearningSessionsCompanion extends UpdateCompanion<LearningSession> {
+  final Value<String> id;
+  final Value<String> payloadJson;
+  final Value<int> startedAtUtcMs;
+  final Value<int> rowid;
+  const LearningSessionsCompanion({
+    this.id = const Value.absent(),
+    this.payloadJson = const Value.absent(),
+    this.startedAtUtcMs = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LearningSessionsCompanion.insert({
+    required String id,
+    required String payloadJson,
+    required int startedAtUtcMs,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       payloadJson = Value(payloadJson),
+       startedAtUtcMs = Value(startedAtUtcMs);
+  static Insertable<LearningSession> custom({
+    Expression<String>? id,
+    Expression<String>? payloadJson,
+    Expression<int>? startedAtUtcMs,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (payloadJson != null) 'payload_json': payloadJson,
+      if (startedAtUtcMs != null) 'started_at_utc_ms': startedAtUtcMs,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LearningSessionsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? payloadJson,
+    Value<int>? startedAtUtcMs,
+    Value<int>? rowid,
+  }) {
+    return LearningSessionsCompanion(
+      id: id ?? this.id,
+      payloadJson: payloadJson ?? this.payloadJson,
+      startedAtUtcMs: startedAtUtcMs ?? this.startedAtUtcMs,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (payloadJson.present) {
+      map['payload_json'] = Variable<String>(payloadJson.value);
+    }
+    if (startedAtUtcMs.present) {
+      map['started_at_utc_ms'] = Variable<int>(startedAtUtcMs.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LearningSessionsCompanion(')
+          ..write('id: $id, ')
+          ..write('payloadJson: $payloadJson, ')
+          ..write('startedAtUtcMs: $startedAtUtcMs, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $HistoryReviewsTable extends HistoryReviews
+    with TableInfo<$HistoryReviewsTable, HistoryReview> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $HistoryReviewsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _confidenceMeta = const VerificationMeta(
+    'confidence',
+  );
+  @override
+  late final GeneratedColumn<double> confidence = GeneratedColumn<double>(
+    'confidence',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _favoriteMeta = const VerificationMeta(
+    'favorite',
+  );
+  @override
+  late final GeneratedColumn<bool> favorite = GeneratedColumn<bool>(
+    'favorite',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("favorite" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _incorrectMeta = const VerificationMeta(
+    'incorrect',
+  );
+  @override
+  late final GeneratedColumn<bool> incorrect = GeneratedColumn<bool>(
+    'incorrect',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("incorrect" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    confidence,
+    favorite,
+    incorrect,
+    note,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'history_reviews';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<HistoryReview> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('confidence')) {
+      context.handle(
+        _confidenceMeta,
+        confidence.isAcceptableOrUnknown(data['confidence']!, _confidenceMeta),
+      );
+    }
+    if (data.containsKey('favorite')) {
+      context.handle(
+        _favoriteMeta,
+        favorite.isAcceptableOrUnknown(data['favorite']!, _favoriteMeta),
+      );
+    }
+    if (data.containsKey('incorrect')) {
+      context.handle(
+        _incorrectMeta,
+        incorrect.isAcceptableOrUnknown(data['incorrect']!, _incorrectMeta),
+      );
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  HistoryReview map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return HistoryReview(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      confidence: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}confidence'],
+      ),
+      favorite: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}favorite'],
+      )!,
+      incorrect: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}incorrect'],
+      )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+    );
+  }
+
+  @override
+  $HistoryReviewsTable createAlias(String alias) {
+    return $HistoryReviewsTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get isStrict => true;
+}
+
+class HistoryReview extends DataClass implements Insertable<HistoryReview> {
+  final String id;
+  final double? confidence;
+  final bool favorite;
+  final bool incorrect;
+  final String? note;
+  const HistoryReview({
+    required this.id,
+    this.confidence,
+    required this.favorite,
+    required this.incorrect,
+    this.note,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    if (!nullToAbsent || confidence != null) {
+      map['confidence'] = Variable<double>(confidence);
+    }
+    map['favorite'] = Variable<bool>(favorite);
+    map['incorrect'] = Variable<bool>(incorrect);
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    return map;
+  }
+
+  HistoryReviewsCompanion toCompanion(bool nullToAbsent) {
+    return HistoryReviewsCompanion(
+      id: Value(id),
+      confidence: confidence == null && nullToAbsent
+          ? const Value.absent()
+          : Value(confidence),
+      favorite: Value(favorite),
+      incorrect: Value(incorrect),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+    );
+  }
+
+  factory HistoryReview.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return HistoryReview(
+      id: serializer.fromJson<String>(json['id']),
+      confidence: serializer.fromJson<double?>(json['confidence']),
+      favorite: serializer.fromJson<bool>(json['favorite']),
+      incorrect: serializer.fromJson<bool>(json['incorrect']),
+      note: serializer.fromJson<String?>(json['note']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'confidence': serializer.toJson<double?>(confidence),
+      'favorite': serializer.toJson<bool>(favorite),
+      'incorrect': serializer.toJson<bool>(incorrect),
+      'note': serializer.toJson<String?>(note),
+    };
+  }
+
+  HistoryReview copyWith({
+    String? id,
+    Value<double?> confidence = const Value.absent(),
+    bool? favorite,
+    bool? incorrect,
+    Value<String?> note = const Value.absent(),
+  }) => HistoryReview(
+    id: id ?? this.id,
+    confidence: confidence.present ? confidence.value : this.confidence,
+    favorite: favorite ?? this.favorite,
+    incorrect: incorrect ?? this.incorrect,
+    note: note.present ? note.value : this.note,
+  );
+  HistoryReview copyWithCompanion(HistoryReviewsCompanion data) {
+    return HistoryReview(
+      id: data.id.present ? data.id.value : this.id,
+      confidence: data.confidence.present
+          ? data.confidence.value
+          : this.confidence,
+      favorite: data.favorite.present ? data.favorite.value : this.favorite,
+      incorrect: data.incorrect.present ? data.incorrect.value : this.incorrect,
+      note: data.note.present ? data.note.value : this.note,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('HistoryReview(')
+          ..write('id: $id, ')
+          ..write('confidence: $confidence, ')
+          ..write('favorite: $favorite, ')
+          ..write('incorrect: $incorrect, ')
+          ..write('note: $note')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, confidence, favorite, incorrect, note);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is HistoryReview &&
+          other.id == this.id &&
+          other.confidence == this.confidence &&
+          other.favorite == this.favorite &&
+          other.incorrect == this.incorrect &&
+          other.note == this.note);
+}
+
+class HistoryReviewsCompanion extends UpdateCompanion<HistoryReview> {
+  final Value<String> id;
+  final Value<double?> confidence;
+  final Value<bool> favorite;
+  final Value<bool> incorrect;
+  final Value<String?> note;
+  final Value<int> rowid;
+  const HistoryReviewsCompanion({
+    this.id = const Value.absent(),
+    this.confidence = const Value.absent(),
+    this.favorite = const Value.absent(),
+    this.incorrect = const Value.absent(),
+    this.note = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  HistoryReviewsCompanion.insert({
+    required String id,
+    this.confidence = const Value.absent(),
+    this.favorite = const Value.absent(),
+    this.incorrect = const Value.absent(),
+    this.note = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id);
+  static Insertable<HistoryReview> custom({
+    Expression<String>? id,
+    Expression<double>? confidence,
+    Expression<bool>? favorite,
+    Expression<bool>? incorrect,
+    Expression<String>? note,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (confidence != null) 'confidence': confidence,
+      if (favorite != null) 'favorite': favorite,
+      if (incorrect != null) 'incorrect': incorrect,
+      if (note != null) 'note': note,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  HistoryReviewsCompanion copyWith({
+    Value<String>? id,
+    Value<double?>? confidence,
+    Value<bool>? favorite,
+    Value<bool>? incorrect,
+    Value<String?>? note,
+    Value<int>? rowid,
+  }) {
+    return HistoryReviewsCompanion(
+      id: id ?? this.id,
+      confidence: confidence ?? this.confidence,
+      favorite: favorite ?? this.favorite,
+      incorrect: incorrect ?? this.incorrect,
+      note: note ?? this.note,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (confidence.present) {
+      map['confidence'] = Variable<double>(confidence.value);
+    }
+    if (favorite.present) {
+      map['favorite'] = Variable<bool>(favorite.value);
+    }
+    if (incorrect.present) {
+      map['incorrect'] = Variable<bool>(incorrect.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('HistoryReviewsCompanion(')
+          ..write('id: $id, ')
+          ..write('confidence: $confidence, ')
+          ..write('favorite: $favorite, ')
+          ..write('incorrect: $incorrect, ')
+          ..write('note: $note, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2154,6 +2852,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $PendingSyncOpsTable pendingSyncOps = $PendingSyncOpsTable(this);
   late final $SyncStatesTable syncStates = $SyncStatesTable(this);
   late final $AppSettingsTable appSettings = $AppSettingsTable(this);
+  late final $LearningSessionsTable learningSessions = $LearningSessionsTable(
+    this,
+  );
+  late final $HistoryReviewsTable historyReviews = $HistoryReviewsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2164,6 +2866,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     pendingSyncOps,
     syncStates,
     appSettings,
+    learningSessions,
+    historyReviews,
   ];
 }
 
@@ -2172,6 +2876,7 @@ typedef $$SignEntriesTableCreateCompanionBuilder =
       required String code,
       required String labelVi,
       Value<String?> description,
+      Value<String?> detailsJson,
       Value<String?> mediaLocalPath,
       required String catalogVersion,
       required String sourceUrl,
@@ -2184,6 +2889,7 @@ typedef $$SignEntriesTableUpdateCompanionBuilder =
       Value<String> code,
       Value<String> labelVi,
       Value<String?> description,
+      Value<String?> detailsJson,
       Value<String?> mediaLocalPath,
       Value<String> catalogVersion,
       Value<String> sourceUrl,
@@ -2213,6 +2919,11 @@ class $$SignEntriesTableFilterComposer
 
   ColumnFilters<String> get description => $composableBuilder(
     column: $table.description,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get detailsJson => $composableBuilder(
+    column: $table.detailsJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2266,6 +2977,11 @@ class $$SignEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get detailsJson => $composableBuilder(
+    column: $table.detailsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get mediaLocalPath => $composableBuilder(
     column: $table.mediaLocalPath,
     builder: (column) => ColumnOrderings(column),
@@ -2309,6 +3025,11 @@ class $$SignEntriesTableAnnotationComposer
 
   GeneratedColumn<String> get description => $composableBuilder(
     column: $table.description,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get detailsJson => $composableBuilder(
+    column: $table.detailsJson,
     builder: (column) => column,
   );
 
@@ -2370,6 +3091,7 @@ class $$SignEntriesTableTableManager
                 Value<String> code = const Value.absent(),
                 Value<String> labelVi = const Value.absent(),
                 Value<String?> description = const Value.absent(),
+                Value<String?> detailsJson = const Value.absent(),
                 Value<String?> mediaLocalPath = const Value.absent(),
                 Value<String> catalogVersion = const Value.absent(),
                 Value<String> sourceUrl = const Value.absent(),
@@ -2380,6 +3102,7 @@ class $$SignEntriesTableTableManager
                 code: code,
                 labelVi: labelVi,
                 description: description,
+                detailsJson: detailsJson,
                 mediaLocalPath: mediaLocalPath,
                 catalogVersion: catalogVersion,
                 sourceUrl: sourceUrl,
@@ -2392,6 +3115,7 @@ class $$SignEntriesTableTableManager
                 required String code,
                 required String labelVi,
                 Value<String?> description = const Value.absent(),
+                Value<String?> detailsJson = const Value.absent(),
                 Value<String?> mediaLocalPath = const Value.absent(),
                 required String catalogVersion,
                 required String sourceUrl,
@@ -2402,6 +3126,7 @@ class $$SignEntriesTableTableManager
                 code: code,
                 labelVi: labelVi,
                 description: description,
+                detailsJson: detailsJson,
                 mediaLocalPath: mediaLocalPath,
                 catalogVersion: catalogVersion,
                 sourceUrl: sourceUrl,
@@ -3348,6 +4073,400 @@ typedef $$AppSettingsTableProcessedTableManager =
       AppSettingRow,
       PrefetchHooks Function()
     >;
+typedef $$LearningSessionsTableCreateCompanionBuilder =
+    LearningSessionsCompanion Function({
+      required String id,
+      required String payloadJson,
+      required int startedAtUtcMs,
+      Value<int> rowid,
+    });
+typedef $$LearningSessionsTableUpdateCompanionBuilder =
+    LearningSessionsCompanion Function({
+      Value<String> id,
+      Value<String> payloadJson,
+      Value<int> startedAtUtcMs,
+      Value<int> rowid,
+    });
+
+class $$LearningSessionsTableFilterComposer
+    extends Composer<_$AppDatabase, $LearningSessionsTable> {
+  $$LearningSessionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payloadJson => $composableBuilder(
+    column: $table.payloadJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get startedAtUtcMs => $composableBuilder(
+    column: $table.startedAtUtcMs,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LearningSessionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $LearningSessionsTable> {
+  $$LearningSessionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payloadJson => $composableBuilder(
+    column: $table.payloadJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get startedAtUtcMs => $composableBuilder(
+    column: $table.startedAtUtcMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LearningSessionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LearningSessionsTable> {
+  $$LearningSessionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get payloadJson => $composableBuilder(
+    column: $table.payloadJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get startedAtUtcMs => $composableBuilder(
+    column: $table.startedAtUtcMs,
+    builder: (column) => column,
+  );
+}
+
+class $$LearningSessionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LearningSessionsTable,
+          LearningSession,
+          $$LearningSessionsTableFilterComposer,
+          $$LearningSessionsTableOrderingComposer,
+          $$LearningSessionsTableAnnotationComposer,
+          $$LearningSessionsTableCreateCompanionBuilder,
+          $$LearningSessionsTableUpdateCompanionBuilder,
+          (
+            LearningSession,
+            BaseReferences<
+              _$AppDatabase,
+              $LearningSessionsTable,
+              LearningSession
+            >,
+          ),
+          LearningSession,
+          PrefetchHooks Function()
+        > {
+  $$LearningSessionsTableTableManager(
+    _$AppDatabase db,
+    $LearningSessionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LearningSessionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LearningSessionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LearningSessionsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> payloadJson = const Value.absent(),
+                Value<int> startedAtUtcMs = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LearningSessionsCompanion(
+                id: id,
+                payloadJson: payloadJson,
+                startedAtUtcMs: startedAtUtcMs,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String payloadJson,
+                required int startedAtUtcMs,
+                Value<int> rowid = const Value.absent(),
+              }) => LearningSessionsCompanion.insert(
+                id: id,
+                payloadJson: payloadJson,
+                startedAtUtcMs: startedAtUtcMs,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$LearningSessionsTable, LearningSession>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $LearningSessionsTable,
+                    LearningSession
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LearningSessionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LearningSessionsTable,
+      LearningSession,
+      $$LearningSessionsTableFilterComposer,
+      $$LearningSessionsTableOrderingComposer,
+      $$LearningSessionsTableAnnotationComposer,
+      $$LearningSessionsTableCreateCompanionBuilder,
+      $$LearningSessionsTableUpdateCompanionBuilder,
+      (
+        LearningSession,
+        BaseReferences<_$AppDatabase, $LearningSessionsTable, LearningSession>,
+      ),
+      LearningSession,
+      PrefetchHooks Function()
+    >;
+typedef $$HistoryReviewsTableCreateCompanionBuilder =
+    HistoryReviewsCompanion Function({
+      required String id,
+      Value<double?> confidence,
+      Value<bool> favorite,
+      Value<bool> incorrect,
+      Value<String?> note,
+      Value<int> rowid,
+    });
+typedef $$HistoryReviewsTableUpdateCompanionBuilder =
+    HistoryReviewsCompanion Function({
+      Value<String> id,
+      Value<double?> confidence,
+      Value<bool> favorite,
+      Value<bool> incorrect,
+      Value<String?> note,
+      Value<int> rowid,
+    });
+
+class $$HistoryReviewsTableFilterComposer
+    extends Composer<_$AppDatabase, $HistoryReviewsTable> {
+  $$HistoryReviewsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get confidence => $composableBuilder(
+    column: $table.confidence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get favorite => $composableBuilder(
+    column: $table.favorite,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get incorrect => $composableBuilder(
+    column: $table.incorrect,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$HistoryReviewsTableOrderingComposer
+    extends Composer<_$AppDatabase, $HistoryReviewsTable> {
+  $$HistoryReviewsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get confidence => $composableBuilder(
+    column: $table.confidence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get favorite => $composableBuilder(
+    column: $table.favorite,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get incorrect => $composableBuilder(
+    column: $table.incorrect,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$HistoryReviewsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $HistoryReviewsTable> {
+  $$HistoryReviewsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<double> get confidence => $composableBuilder(
+    column: $table.confidence,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get favorite =>
+      $composableBuilder(column: $table.favorite, builder: (column) => column);
+
+  GeneratedColumn<bool> get incorrect =>
+      $composableBuilder(column: $table.incorrect, builder: (column) => column);
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+}
+
+class $$HistoryReviewsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $HistoryReviewsTable,
+          HistoryReview,
+          $$HistoryReviewsTableFilterComposer,
+          $$HistoryReviewsTableOrderingComposer,
+          $$HistoryReviewsTableAnnotationComposer,
+          $$HistoryReviewsTableCreateCompanionBuilder,
+          $$HistoryReviewsTableUpdateCompanionBuilder,
+          (
+            HistoryReview,
+            BaseReferences<_$AppDatabase, $HistoryReviewsTable, HistoryReview>,
+          ),
+          HistoryReview,
+          PrefetchHooks Function()
+        > {
+  $$HistoryReviewsTableTableManager(
+    _$AppDatabase db,
+    $HistoryReviewsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$HistoryReviewsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$HistoryReviewsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$HistoryReviewsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<double?> confidence = const Value.absent(),
+                Value<bool> favorite = const Value.absent(),
+                Value<bool> incorrect = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => HistoryReviewsCompanion(
+                id: id,
+                confidence: confidence,
+                favorite: favorite,
+                incorrect: incorrect,
+                note: note,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                Value<double?> confidence = const Value.absent(),
+                Value<bool> favorite = const Value.absent(),
+                Value<bool> incorrect = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => HistoryReviewsCompanion.insert(
+                id: id,
+                confidence: confidence,
+                favorite: favorite,
+                incorrect: incorrect,
+                note: note,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$HistoryReviewsTable, HistoryReview>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $HistoryReviewsTable,
+                    HistoryReview
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$HistoryReviewsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $HistoryReviewsTable,
+      HistoryReview,
+      $$HistoryReviewsTableFilterComposer,
+      $$HistoryReviewsTableOrderingComposer,
+      $$HistoryReviewsTableAnnotationComposer,
+      $$HistoryReviewsTableCreateCompanionBuilder,
+      $$HistoryReviewsTableUpdateCompanionBuilder,
+      (
+        HistoryReview,
+        BaseReferences<_$AppDatabase, $HistoryReviewsTable, HistoryReview>,
+      ),
+      HistoryReview,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3365,4 +4484,8 @@ class $AppDatabaseManager {
       $$SyncStatesTableTableManager(_db, _db.syncStates);
   $$AppSettingsTableTableManager get appSettings =>
       $$AppSettingsTableTableManager(_db, _db.appSettings);
+  $$LearningSessionsTableTableManager get learningSessions =>
+      $$LearningSessionsTableTableManager(_db, _db.learningSessions);
+  $$HistoryReviewsTableTableManager get historyReviews =>
+      $$HistoryReviewsTableTableManager(_db, _db.historyReviews);
 }

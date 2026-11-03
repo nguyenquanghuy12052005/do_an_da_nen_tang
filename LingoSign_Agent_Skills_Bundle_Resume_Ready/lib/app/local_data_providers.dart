@@ -1,4 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
+
+import 'package:flutter/services.dart';
+
+import '../features/learning/domain/practice_session.dart';
+import '../data/local/repositories/local_learning_repository.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -15,6 +21,13 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
   ref.onDispose(() => unawaited(database.close()));
   return database;
 });
+final learningRepositoryProvider = Provider<LearningRepository>(
+  (ref) => LocalLearningRepository(ref.watch(appDatabaseProvider)),
+);
+final learningSessionsProvider =
+    StreamProvider.autoDispose<List<PracticeSession>>(
+      (ref) => ref.watch(learningRepositoryProvider).watchSessions(),
+    );
 final historyRepositoryProvider = Provider<RecognitionHistoryRepository>(
   (ref) => LocalRecognitionHistoryRepository(ref.watch(appDatabaseProvider)),
 );
@@ -24,9 +37,75 @@ final historyPageProvider = StreamProvider.autoDispose
           .watch(historyRepositoryProvider)
           .watchHistory(limit: 11, before: before),
     );
+final filteredHistoryPageProvider = StreamProvider.autoDispose
+    .family<
+      List<RecognitionRecord>,
+      ({RecognitionRecord? before, HistoryFilter filter})
+    >(
+      (ref, request) => ref
+          .watch(historyRepositoryProvider)
+          .watchHistory(
+            limit: 11,
+            before: request.before,
+            filter: request.filter,
+          ),
+    );
 final dictionaryRepositoryProvider = Provider<SignDictionaryRepository>(
   (ref) => LocalSignDictionaryRepository(ref.watch(appDatabaseProvider)),
 );
-final dictionaryProvider = FutureProvider.family<List<SignEntry>, String>(
-  (ref, query) => ref.watch(dictionaryRepositoryProvider).search(query),
-);
+final bundledDictionaryProvider = FutureProvider<void>((ref) async {
+  final catalog = jsonDecode(
+    await rootBundle.loadString('assets/dictionary/catalog.json'),
+  ) as Map<String, dynamic>;
+  final items = catalog['entries'] as List;
+  if (items.isEmpty) return;
+  final entries = items.map((raw) {
+    final item = (raw as Map).cast<String, dynamic>();
+    String? asset(String key) {
+      final value = item[key] as String?;
+      if (value != null &&
+          (!value.startsWith('assets/dictionary/') || value.contains('..'))) {
+        throw FormatException('Invalid catalog asset');
+      }
+      return value;
+    }
+
+    return SignEntry(
+      code: item['code'] as String,
+      label: item['label'] as String,
+      description: item['description'] as String?,
+      category: item['category'] as String? ?? 'Khác',
+      signSystem: item['signSystem'] as String,
+      instructions: item['instructions'] as String,
+      imageAsset: asset('imageAsset'),
+      videoAsset: asset('videoAsset'),
+      modelLabel: item['modelLabel'] as String?,
+    );
+  }).toList();
+  await LocalSignDictionaryRepository(ref.read(appDatabaseProvider))
+      .upsertVerifiedCatalog(
+        entries: entries,
+        catalogVersion: catalog['version'] as String,
+        sourceUrl: catalog['sourceUrl'] as String,
+        licenseName: catalog['licenseName'] as String,
+        updatedAt: DateTime.now(),
+      );
+});
+final supportedPracticeLabelsProvider = FutureProvider<Set<String>>((
+  ref,
+) async {
+  final metadata = jsonDecode(
+    await rootBundle.loadString('assets/model/model.json'),
+  ) as Map<String, dynamic>;
+  return (metadata['labels'] as List)
+      .cast<String>()
+      .where((label) => RegExp(r'^[A-Z]$').hasMatch(label))
+      .toSet();
+});
+
+final dictionaryProvider = FutureProvider.autoDispose
+    .family<List<SignEntry>, String>((ref, query) async {
+      final repository = ref.watch(dictionaryRepositoryProvider);
+      await ref.watch(bundledDictionaryProvider.future);
+      return repository.search(query);
+    });

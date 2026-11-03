@@ -148,12 +148,20 @@ class _FakeDictionary implements SignDictionaryRepository {
 }
 
 class _FakeHistory implements RecognitionHistoryRepository {
+  @override
+  Future<void> updateReview(
+    String id, {
+    bool? favorite,
+    bool? incorrect,
+    String? note,
+  }) async {}
   final saved = <RecognitionRecord>[];
 
   @override
   Stream<List<RecognitionRecord>> watchHistory({
     int? limit,
     RecognitionRecord? before,
+    HistoryFilter filter = const HistoryFilter(),
   }) => Stream.value(saved);
 
   @override

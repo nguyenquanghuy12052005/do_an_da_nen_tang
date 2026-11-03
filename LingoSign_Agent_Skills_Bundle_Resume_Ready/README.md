@@ -14,6 +14,14 @@ The received model artifacts and remaining contract questions are in
 
 ## Development
 
+Learning features: the **Học tập** tab now offers model-label camera practice
+(quick, 5 or 10 questions), persisted answers, daily progress and retry targets.
+History supports SQL filters, favorites, confidence and separate correction notes.
+Dictionary supports categorized licensed asset catalogs and offline image/video
+detail pages. The catalog is intentionally empty pending user-supplied content.
+See [learning feature guide](docs/agent/LEARNING_FEATURES.md) for use, catalog format,
+schema v7 migration, test coverage and local-only learning/review storage limits.
+
 M3 now includes opt-in, metadata-only bidirectional sync to a local Python/SQLite
 demo server, a transactional durable outbox, retry/backoff, idempotency and
 deletion tombstones. See [M3 demo and verification](docs/agent/M3_DEMO.md) for

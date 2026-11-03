@@ -31,26 +31,53 @@ class LocalRecognitionHistoryRepository
   Stream<List<RecognitionRecord>> watchHistory({
     int? limit,
     RecognitionRecord? before,
+    HistoryFilter filter = const HistoryFilter(),
   }) {
     if (limit != null && limit < 1) throw ArgumentError.value(limit);
-    final query = database.select(database.recognitionHistoryRows)
-      ..where((table) => table.deletedAtUtcMs.isNull())
-      ..orderBy([
-        (table) => OrderingTerm.desc(table.confirmedAtUtcMs),
-        (table) => OrderingTerm.desc(table.id),
-      ]);
+    final table = database.recognitionHistoryRows;
+    final reviews = database.historyReviews;
+    final query =
+        database.select(table).join([
+            leftOuterJoin(reviews, reviews.id.equalsExp(table.id)),
+          ])
+          ..where(table.deletedAtUtcMs.isNull())
+          ..orderBy([
+            OrderingTerm.desc(table.confirmedAtUtcMs),
+            OrderingTerm.desc(table.id),
+          ]);
+    final search = filter.query.trim();
+    if (search.isNotEmpty) {
+      query.where(
+        table.labelSnapshot.contains(search) | table.signCode.contains(search),
+      );
+    }
+    if (filter.favoritesOnly) query.where(reviews.favorite.equals(true));
+    if (filter.day case final day?) {
+      final start = DateTime(day.year, day.month, day.day);
+      final end = DateTime(day.year, day.month, day.day + 1);
+      query.where(
+        table.confirmedAtUtcMs.isBiggerOrEqualValue(
+              start.toUtc().millisecondsSinceEpoch,
+            ) &
+            table.confirmedAtUtcMs.isSmallerThanValue(
+              end.toUtc().millisecondsSinceEpoch,
+            ),
+      );
+    }
     if (before != null) {
       final time = before.confirmedAt.toUtc().millisecondsSinceEpoch;
       query.where(
-        (table) =>
-            table.confirmedAtUtcMs.isSmallerThanValue(time) |
+        table.confirmedAtUtcMs.isSmallerThanValue(time) |
             (table.confirmedAtUtcMs.equals(time) &
                 table.id.isSmallerThanValue(before.id)),
       );
     }
     if (limit != null) query.limit(limit);
     return query.watch().asyncMap(
-      (rows) async => [for (final row in rows) await _toEntity(row)],
+      (rows) async => [
+        for (final row in rows)
+          await _toEntity(row.readTable(table), row.readTableOrNull(reviews)),
+      ],
     );
   }
 
@@ -81,6 +108,14 @@ class LocalRecognitionHistoryRepository
                 confirmedAtUtcMs: record.confirmedAt
                     .toUtc()
                     .millisecondsSinceEpoch,
+              ),
+            );
+        await database
+            .into(database.historyReviews)
+            .insert(
+              HistoryReviewsCompanion.insert(
+                id: record.id,
+                confidence: Value(record.confidence),
               ),
             );
         await enqueueHistory(database, {
@@ -125,17 +160,46 @@ class LocalRecognitionHistoryRepository
     if (image != null && await image.exists()) await image.delete();
   }
 
-  Future<RecognitionRecord> _toEntity(RecognitionHistoryRow row) async =>
-      RecognitionRecord(
-        id: row.id,
-        signCode: row.signCode,
-        label: row.labelSnapshot,
-        imagePath: row.imageRelativePath == null
-            ? null
-            : (await _photoFile(row.imageRelativePath!)).path,
-        confirmedAt: DateTime.fromMillisecondsSinceEpoch(
-          row.confirmedAtUtcMs,
-          isUtc: true,
-        ),
-      );
+  @override
+  Future<void> updateReview(
+    String id, {
+    bool? favorite,
+    bool? incorrect,
+    String? note,
+  }) => database.transaction(() async {
+    final current = await (database.select(
+      database.historyReviews,
+    )..where((row) => row.id.equals(id))).getSingleOrNull();
+    await database
+        .into(database.historyReviews)
+        .insertOnConflictUpdate(
+          HistoryReviewsCompanion.insert(
+            id: id,
+            confidence: Value(current?.confidence),
+            favorite: Value(favorite ?? current?.favorite ?? false),
+            incorrect: Value(incorrect ?? current?.incorrect ?? false),
+            note: Value(note ?? current?.note),
+          ),
+        );
+  });
+
+  Future<RecognitionRecord> _toEntity(
+    RecognitionHistoryRow row,
+    HistoryReview? review,
+  ) async => RecognitionRecord(
+    id: row.id,
+    signCode: row.signCode,
+    label: row.labelSnapshot,
+    confidence: review?.confidence,
+    favorite: review?.favorite ?? false,
+    incorrect: review?.incorrect ?? false,
+    note: review?.note,
+    imagePath: row.imageRelativePath == null
+        ? null
+        : (await _photoFile(row.imageRelativePath!)).path,
+    confirmedAt: DateTime.fromMillisecondsSinceEpoch(
+      row.confirmedAtUtcMs,
+      isUtc: true,
+    ),
+  );
 }

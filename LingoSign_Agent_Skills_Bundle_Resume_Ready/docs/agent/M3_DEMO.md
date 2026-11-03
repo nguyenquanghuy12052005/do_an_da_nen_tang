@@ -20,6 +20,10 @@ cd D:\danentang\do_an_da_nen_tang\LingoSign_Agent_Skills_Bundle_Resume_Ready
 .\tool\sync_server\run-app.ps1
 ```
 
+Launcher mặc định build APK tách theo ABI, cài bằng ADB `install -r` rồi mở app và trả lại terminal. Không cần debugger để test chức năng hoặc đồng bộ. Chạy lại cùng lệnh sau khi sửa code để build/cài bản mới; `-NoAttach` cũ vẫn tương thích. Nếu cài thất bại, script không tự gỡ app.
+
+Chỉ khi cần hot reload, dùng `.\tool\sync_server\run-app.ps1 -Attach`. Trên máy Windows này, bước attach vẫn có thể lỗi đường dẫn `/C:/.../video_player...` dù build và app chạy được. `--initialize-from-dill` chưa khắc phục ổn định; lỗi debugger còn chưa giải quyết dứt điểm. Trong phiên attach thành công, nhấn d để tách và giữ app chạy; q để dừng app.
+
 Nếu máy ảo chưa mở, chạy lệnh sau trong terminal riêng và chờ màn hình chính:
 
 ```powershell

@@ -1,0 +1,367 @@
+{
+  "version": "user-chart-1",
+  "sourceUrl": "Ảnh bảng ký hiệu do người dùng cung cấp trong cuộc trò chuyện",
+  "licenseName": "Người dùng cung cấp để tích hợp vào đồ án; chưa có thông tin giấy phép gốc",
+  "entries": [
+    {
+      "code": "chart-A",
+      "label": "Chữ A",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu A trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/A.png",
+      "modelLabel": "A"
+    },
+    {
+      "code": "chart-B",
+      "label": "Chữ B",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu B trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/B.png",
+      "modelLabel": "B"
+    },
+    {
+      "code": "chart-C",
+      "label": "Chữ C",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu C trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/C.png",
+      "modelLabel": "C"
+    },
+    {
+      "code": "chart-D",
+      "label": "Chữ D",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu D trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/D.png",
+      "modelLabel": "D"
+    },
+    {
+      "code": "chart-E",
+      "label": "Chữ E",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu E trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/E.png",
+      "modelLabel": "E"
+    },
+    {
+      "code": "chart-F",
+      "label": "Chữ F",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu F trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/F.png",
+      "modelLabel": "F"
+    },
+    {
+      "code": "chart-G",
+      "label": "Chữ G",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu G trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/G.png",
+      "modelLabel": "G"
+    },
+    {
+      "code": "chart-H",
+      "label": "Chữ H",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu H trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/H.png",
+      "modelLabel": "H"
+    },
+    {
+      "code": "chart-I",
+      "label": "Chữ I",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu I trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/I.png",
+      "modelLabel": "I"
+    },
+    {
+      "code": "chart-J",
+      "label": "Chữ J",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu J trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Hình tĩnh có mũi tên chỉ chuyển động; cần thực hiện cả chuyển động.",
+      "imageAsset": "assets/dictionary/signs/J.png",
+      "modelLabel": "J"
+    },
+    {
+      "code": "chart-K",
+      "label": "Chữ K",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu K trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/K.png",
+      "modelLabel": "K"
+    },
+    {
+      "code": "chart-L",
+      "label": "Chữ L",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu L trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/L.png",
+      "modelLabel": "L"
+    },
+    {
+      "code": "chart-M",
+      "label": "Chữ M",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu M trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/M.png",
+      "modelLabel": "M"
+    },
+    {
+      "code": "chart-N",
+      "label": "Chữ N",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu N trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/N.png",
+      "modelLabel": "N"
+    },
+    {
+      "code": "chart-O",
+      "label": "Chữ O",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu O trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/O.png",
+      "modelLabel": "O"
+    },
+    {
+      "code": "chart-P",
+      "label": "Chữ P",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu P trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/P.png",
+      "modelLabel": "P"
+    },
+    {
+      "code": "chart-Q",
+      "label": "Chữ Q",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu Q trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/Q.png",
+      "modelLabel": "Q"
+    },
+    {
+      "code": "chart-R",
+      "label": "Chữ R",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu R trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/R.png",
+      "modelLabel": "R"
+    },
+    {
+      "code": "chart-S",
+      "label": "Chữ S",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu S trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/S.png",
+      "modelLabel": "S"
+    },
+    {
+      "code": "chart-T",
+      "label": "Chữ T",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu T trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/T.png",
+      "modelLabel": "T"
+    },
+    {
+      "code": "chart-U",
+      "label": "Chữ U",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu U trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/U.png",
+      "modelLabel": "U"
+    },
+    {
+      "code": "chart-V",
+      "label": "Chữ V",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu V trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/V.png",
+      "modelLabel": "V"
+    },
+    {
+      "code": "chart-W",
+      "label": "Chữ W",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu W trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/W.png",
+      "modelLabel": "W"
+    },
+    {
+      "code": "chart-X",
+      "label": "Chữ X",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu X trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/X.png",
+      "modelLabel": "X"
+    },
+    {
+      "code": "chart-Y",
+      "label": "Chữ Y",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu Y trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/Y.png",
+      "modelLabel": "Y"
+    },
+    {
+      "code": "chart-Z",
+      "label": "Chữ Z",
+      "category": "Bảng chữ cái",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu Z trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Hình tĩnh có mũi tên chỉ chuyển động; cần thực hiện cả chuyển động.",
+      "imageAsset": "assets/dictionary/signs/Z.png",
+      "modelLabel": "Z"
+    },
+    {
+      "code": "chart-1",
+      "label": "Số 1",
+      "category": "Số đếm",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu 1 trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/1.png",
+      "modelLabel": null
+    },
+    {
+      "code": "chart-2",
+      "label": "Số 2",
+      "category": "Số đếm",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu 2 trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/2.png",
+      "modelLabel": null
+    },
+    {
+      "code": "chart-3",
+      "label": "Số 3",
+      "category": "Số đếm",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu 3 trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/3.png",
+      "modelLabel": null
+    },
+    {
+      "code": "chart-4",
+      "label": "Số 4",
+      "category": "Số đếm",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu 4 trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/4.png",
+      "modelLabel": null
+    },
+    {
+      "code": "chart-5",
+      "label": "Số 5",
+      "category": "Số đếm",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu 5 trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/5.png",
+      "modelLabel": null
+    },
+    {
+      "code": "chart-6",
+      "label": "Số 6",
+      "category": "Số đếm",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu 6 trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/6.png",
+      "modelLabel": null
+    },
+    {
+      "code": "chart-7",
+      "label": "Số 7",
+      "category": "Số đếm",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu 7 trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/7.png",
+      "modelLabel": null
+    },
+    {
+      "code": "chart-8",
+      "label": "Số 8",
+      "category": "Số đếm",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu 8 trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/8.png",
+      "modelLabel": null
+    },
+    {
+      "code": "chart-9",
+      "label": "Số 9",
+      "category": "Số đếm",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu 9 trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/9.png",
+      "modelLabel": null
+    },
+    {
+      "code": "chart-0",
+      "label": "Số 0",
+      "category": "Số đếm",
+      "signSystem": "Theo bảng minh họa người dùng cung cấp (chưa xác minh hệ ký hiệu)",
+      "description": "Ký hiệu 0 trong bảng minh họa.",
+      "instructions": "Quan sát hình dáng và hướng bàn tay trong ảnh. Đối chiếu vị trí các ngón tay với hình minh họa.",
+      "imageAsset": "assets/dictionary/signs/0.png",
+      "modelLabel": null
+    }
+  ]
+}

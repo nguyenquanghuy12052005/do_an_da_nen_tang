@@ -8,6 +8,7 @@ class SignEntries extends Table {
   TextColumn get code => text()();
   TextColumn get labelVi => text()();
   TextColumn get description => text().nullable()();
+  TextColumn get detailsJson => text().nullable()();
   TextColumn get mediaLocalPath => text().nullable()();
   TextColumn get catalogVersion => text()();
   TextColumn get sourceUrl => text()();
@@ -83,6 +84,28 @@ class AppSettings extends Table {
   bool get isStrict => true;
 }
 
+class LearningSessions extends Table {
+  TextColumn get id => text()();
+  TextColumn get payloadJson => text()();
+  IntColumn get startedAtUtcMs => integer()();
+  @override
+  Set<Column> get primaryKey => {id};
+  @override
+  bool get isStrict => true;
+}
+
+class HistoryReviews extends Table {
+  TextColumn get id => text()();
+  RealColumn get confidence => real().nullable()();
+  BoolColumn get favorite => boolean().withDefault(const Constant(false))();
+  BoolColumn get incorrect => boolean().withDefault(const Constant(false))();
+  TextColumn get note => text().nullable()();
+  @override
+  Set<Column> get primaryKey => {id};
+  @override
+  bool get isStrict => true;
+}
+
 @DriftDatabase(
   tables: [
     SignEntries,
@@ -90,6 +113,8 @@ class AppSettings extends Table {
     PendingSyncOps,
     SyncStates,
     AppSettings,
+    LearningSessions,
+    HistoryReviews,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -98,12 +123,23 @@ class AppDatabase extends _$AppDatabase {
   factory AppDatabase.open() => AppDatabase(driftDatabase(name: 'lingosign'));
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (migrator) => migrator.createAll(),
     onUpgrade: (migrator, from, to) async {
+      if (from < 7) {
+        final columns = await customSelect('PRAGMA table_info(sign_entries)')
+            .get();
+        if (!columns.any(
+          (column) => column.read<String>('name') == 'details_json',
+        )) {
+          await migrator.addColumn(signEntries, signEntries.detailsJson);
+        }
+      }
+      if (from < 6) await migrator.createTable(historyReviews);
+      if (from < 5) await migrator.createTable(learningSessions);
       if (from < 4) {
         await migrator.addColumn(
           pendingSyncOps,
