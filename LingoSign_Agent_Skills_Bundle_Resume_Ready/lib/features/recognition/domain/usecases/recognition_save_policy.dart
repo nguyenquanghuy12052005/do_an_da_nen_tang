@@ -2,7 +2,7 @@ import '../entities/recognition_prediction.dart';
 
 /// Session policy; confidence is a model score, not measured accuracy.
 class RecognitionSavePolicy {
-  static const minimumConfidence = 0.6;
+  static const minimumConfidence = 0.45;
   String? _lastLabel;
 
   bool isConfident(RecognitionPrediction prediction) =>

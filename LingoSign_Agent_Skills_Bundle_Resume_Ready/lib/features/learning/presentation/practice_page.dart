@@ -10,6 +10,7 @@ import '../../../app/design_components.dart';
 import '../../recognition/domain/entities/recognition_prediction.dart';
 import '../../recognition/domain/usecases/select_window_prediction.dart';
 import '../domain/practice_session.dart';
+import 'practice_mascot.dart';
 
 class PracticePage extends ConsumerStatefulWidget {
   const PracticePage({super.key, this.target});
@@ -25,6 +26,7 @@ class _PracticePageState extends ConsumerState<PracticePage>
   StreamSubscription<RecognitionPrediction>? _subscription;
   Timer? _timer;
   final _window = SelectWindowPrediction();
+  final _feedbackAnchor = GlobalKey();
   bool _active = false, _busy = false, _feedback = false, _disposed = false;
   String? _message;
   Future<void> _saves = Future.value();
@@ -57,7 +59,7 @@ class _PracticePageState extends ConsumerState<PracticePage>
     if (mounted && !_disposed) setState(() => _active = false);
   }
 
-  Future<void> _start(int count) async {
+  Future<void> _start(int count, {List<String>? review}) async {
     setState(() {
       _busy = true;
       _message = null;
@@ -73,9 +75,11 @@ class _PracticePageState extends ConsumerState<PracticePage>
       final session = PracticeSession(
         id: '${now.microsecondsSinceEpoch}-${Random.secure().nextInt(1 << 30)}',
         startedAt: now,
-        targets: _selectedTarget == null
-            ? labels.take(count).toList()
-            : List.filled(count, _selectedTarget!),
+        targets:
+            review ??
+            (_selectedTarget == null
+                ? labels.take(count).toList()
+                : List.filled(count, _selectedTarget!)),
       );
       await ref.read(learningRepositoryProvider).save(session);
       if (!mounted) return;
@@ -144,11 +148,28 @@ class _PracticePageState extends ConsumerState<PracticePage>
         );
         return;
       }
-      setState(() {
-        _feedback = true;
-        _message = null;
-      });
+      _showFeedback();
       _persist();
+    });
+  }
+
+  void _showFeedback() {
+    setState(() {
+      _feedback = true;
+      _message = null;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final anchor = _feedbackAnchor.currentContext;
+      if (!_feedback || anchor == null || !anchor.mounted) return;
+      unawaited(
+        Scrollable.ensureVisible(
+          anchor,
+          alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
+          duration: MediaQuery.disableAnimationsOf(anchor)
+              ? Duration.zero
+              : const Duration(milliseconds: 250),
+        ),
+      );
     });
   }
 
@@ -181,6 +202,14 @@ class _PracticePageState extends ConsumerState<PracticePage>
   @override
   Widget build(BuildContext context) {
     final session = _session;
+    final answers = session?.answers ?? const <PracticeAnswer>[];
+    final answer = _feedback ? answers.last : null;
+    final streak = answers.reversed.takeWhile((item) => item.correct).length;
+    final review = answers
+        .where((item) => !item.correct)
+        .map((item) => item.target)
+        .toSet()
+        .toList();
     final labels =
         ref.watch(supportedPracticeLabelsProvider).asData?.value.toList() ??
         <String>[];
@@ -195,6 +224,11 @@ class _PracticePageState extends ConsumerState<PracticePage>
           subtitle: 'Thực hiện ký hiệu trên màn hình.',
         ),
         if (session == null) ...[
+          const PracticeMascotCard(
+            mood: MascotMood.welcome,
+            title: 'Cùng luyện với mình nhé!',
+            message: 'Chọn một ký hiệu hoặc thử một bài ngẫu nhiên.',
+          ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _selectedTarget ?? '',
@@ -226,8 +260,14 @@ class _PracticePageState extends ConsumerState<PracticePage>
               ),
             ),
         ] else ...[
-          LinearProgressIndicator(
-            value: session.answers.length / session.targets.length,
+          PracticeProgress(
+            total: session.targets.length,
+            answers: answers,
+            current: _feedback
+                ? answers.length - 1
+                : session.complete
+                ? null
+                : answers.length,
           ),
           const SizedBox(height: 16),
           if (!session.complete || _feedback) ...[
@@ -267,17 +307,31 @@ class _PracticePageState extends ConsumerState<PracticePage>
               ),
             if (_feedback) ...[
               const SizedBox(height: 16),
-              Text(
-                session.answers.last.skipped
+              PracticeMascotCard(
+                key: _feedbackAnchor,
+                mood: answer!.correct ? MascotMood.correct : MascotMood.retry,
+                title: answer.correct
+                    ? 'Đúng rồi! Giỏi lắm!'
+                    : answer.skipped
                     ? 'Đã bỏ qua'
-                    : session.answers.last.correct
-                    ? 'Đúng rồi!'
-                    : 'Chưa đúng. Model nhận: ${session.answers.last.predicted}',
-                style: Theme.of(context).textTheme.titleLarge,
+                    : 'Gần được rồi!',
+                message: answer.skipped
+                    ? 'Mình cùng luyện câu tiếp theo nhé!'
+                    : 'Đáp án đúng: ${answer.target}.',
               ),
-              if (session.answers.last.confidence != null)
-                Text(
-                  'Độ tin cậy model: ${(session.answers.last.confidence! * 100).round()}%',
+              if (answer.correct && streak >= 3)
+                Text('$streak câu đúng liên tiếp!'),
+              if (answer.confidence case final confidence?)
+                Text('Độ tin cậy model: ${(confidence * 100).round()}%'),
+              if (!answer.correct && !answer.skipped)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Image.asset(
+                    'assets/dictionary/signs/${answer.target}.png',
+                    width: 76,
+                    height: 76,
+                    semanticLabel: 'Ký hiệu mẫu ${answer.target}',
+                  ),
                 ),
               FilledButton(
                 onPressed: _busy || _message != null
@@ -299,16 +353,18 @@ class _PracticePageState extends ConsumerState<PracticePage>
                         _timer = null;
                         _window.take();
                         session.skip(DateTime.now());
-                        setState(() => _feedback = true);
+                        _showFeedback();
                         _persist();
                       },
                 child: const Text('Bỏ qua câu này'),
               ),
           ] else ...[
-            const Icon(Icons.emoji_events_outlined, size: 64),
-            Text(
-              'Hoàn thành bài luyện',
-              style: Theme.of(context).textTheme.headlineSmall,
+            PracticeMascotCard(
+              mood: MascotMood.complete,
+              title: 'Hoàn thành bài luyện',
+              message: session.correctCount == session.targets.length
+                  ? 'Xuất sắc! Bạn đã làm đúng tất cả các câu.'
+                  : 'Bạn đã hoàn thành buổi luyện. Mình cùng ôn tiếp nhé!',
             ),
             Text(
               '${session.correctCount}/${session.gradedCount} câu đã chấm trả lời đúng · ${session.answers.where((a) => a.skipped).length} bỏ qua',
@@ -326,11 +382,20 @@ class _PracticePageState extends ConsumerState<PracticePage>
                       : 'Model nhận ${answer.predicted}',
                 ),
               ),
+            if (review.isNotEmpty)
+              FilledButton.tonal(
+                onPressed: _busy
+                    ? null
+                    : () => _start(review.length, review: review),
+                child: const Text('Luyện lại các ký hiệu này'),
+              ),
             FilledButton(
-              onPressed: () => setState(() {
-                _session = null;
-                _message = null;
-              }),
+              onPressed: _busy
+                  ? null
+                  : () => setState(() {
+                      _session = null;
+                      _message = null;
+                    }),
               child: const Text('Bài luyện mới'),
             ),
           ],

@@ -81,7 +81,7 @@ class _SyncSettingsState extends ConsumerState<SyncSettings> {
                         _error = null;
                       });
                     }
-                    if (enabled) {
+                    if (enabled && mounted) {
                       await ref
                           .read(syncControllerProvider.notifier)
                           .synchronize();

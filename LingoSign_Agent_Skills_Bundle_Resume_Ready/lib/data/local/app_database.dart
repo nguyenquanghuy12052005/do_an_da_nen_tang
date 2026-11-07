@@ -171,6 +171,9 @@ class AppDatabase extends _$AppDatabase {
       await customStatement(
         'CREATE INDEX IF NOT EXISTS history_page_idx ON recognition_history_rows (confirmed_at_utc_ms DESC, id DESC) WHERE deleted_at_utc_ms IS NULL',
       );
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS learning_page_idx ON learning_sessions (started_at_utc_ms DESC, id DESC)',
+      );
       await customStatement('PRAGMA foreign_keys = ON');
       await customStatement('PRAGMA journal_mode = WAL');
       await customStatement('PRAGMA synchronous = FULL');

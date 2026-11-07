@@ -15,13 +15,13 @@ void main() {
     final policy = RecognitionSavePolicy();
     for (final prediction in [
       sample(null, 1),
-      sample('A', .59),
+      sample('A', .449),
       sample('A', double.nan),
       sample('A', 1.1),
     ]) {
       expect(policy.isConfident(prediction), isFalse);
     }
-    expect(policy.isConfident(sample('A', .6)), isTrue);
+    expect(policy.isConfident(sample('A', .45)), isTrue);
   });
   test('suppresses repeated label until another label or reset', () {
     final policy = RecognitionSavePolicy();

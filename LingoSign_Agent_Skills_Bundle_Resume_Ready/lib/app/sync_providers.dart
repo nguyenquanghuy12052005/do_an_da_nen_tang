@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -37,33 +38,80 @@ final syncControllerProvider =
     );
 
 class SyncController extends Notifier<AsyncValue<SyncResult?>> {
+  Timer? _retryTimer;
   bool _busy = false;
-  bool _disposed = false;
+  int _generation = 0;
+  int _consecutiveFailures = 0;
+  bool _newWork = false;
+
   @override
   AsyncValue<SyncResult?> build() {
-    _disposed = false;
+    final generation = ++_generation;
+    _busy = false;
+    _consecutiveFailures = 0;
+    _newWork = false;
     if (ref.watch(syncConfiguredProvider)) {
-      final timer = Timer.periodic(
-        const Duration(seconds: 5),
-        (_) => unawaited(synchronize()),
-      );
-      ref.onDispose(timer.cancel);
-      Future.microtask(synchronize);
+      _retryTimer = Timer(Duration.zero, () {
+        if (generation == _generation) unawaited(synchronize());
+      });
+      ref.listen(pendingSyncCountProvider, (previous, next) {
+        final before = previous?.asData?.value;
+        final after = next.asData?.value;
+        if (before == null ||
+            after == null ||
+            after <= before ||
+            _consecutiveFailures > 0) {
+          return;
+        }
+        if (_busy) {
+          _newWork = true;
+        } else {
+          _retryTimer?.cancel();
+          _retryTimer = Timer(
+            const Duration(seconds: 1),
+            () => unawaited(synchronize()),
+          );
+        }
+      });
     }
-    ref.onDispose(() => _disposed = true);
+    ref.onDispose(() {
+      _generation++;
+      _retryTimer?.cancel();
+    });
     return const AsyncData(null);
   }
 
   Future<void> synchronize() async {
     if (_busy || !ref.read(syncConfiguredProvider)) return;
+    _retryTimer?.cancel();
+    final generation = _generation;
     _busy = true;
+    _newWork = false;
+    var failed = false;
+    var pending = 0;
     try {
       final result = await ref.read(syncRepositoryProvider).synchronize();
-      if (!_disposed) state = AsyncData(result);
+      failed = result.error != null;
+      pending = result.pendingCount;
+      if (generation == _generation) state = AsyncData(result);
     } catch (error, stack) {
-      if (!_disposed) state = AsyncError(error, stack);
+      failed = true;
+      if (generation == _generation) state = AsyncError(error, stack);
     } finally {
-      _busy = false;
+      if (generation == _generation) {
+        _busy = false;
+        _consecutiveFailures = failed ? min(_consecutiveFailures + 1, 5) : 0;
+        final delay = Duration(
+          seconds: failed
+              ? min(120, 5 << _consecutiveFailures)
+              : _newWork
+              ? 1
+              : pending > 0
+              ? 5
+              : 30,
+        );
+        _retryTimer = Timer(delay, () => unawaited(synchronize()));
+      }
     }
   }
 }

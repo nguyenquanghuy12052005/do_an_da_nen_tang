@@ -27,16 +27,31 @@ class LocalLearningRepository implements LearningRepository {
     }
   });
   @override
-  Stream<List<PracticeSession>> watchSessions() =>
-      (db.select(
-        db.learningSessions,
-      )..orderBy([(row) => OrderingTerm.desc(row.startedAtUtcMs)])).watch().map(
-        (rows) => rows
-            .map(
-              (row) => PracticeSession.fromJson(
-                jsonDecode(row.payloadJson) as Map<String, dynamic>,
-              ),
-            )
-            .toList(),
-      );
+  Stream<List<PracticeSession>> watchSessions({int? limit, int offset = 0}) {
+    final query = db.select(db.learningSessions)
+      ..orderBy([
+        (row) => OrderingTerm.desc(row.startedAtUtcMs),
+        (row) => OrderingTerm.desc(row.id),
+      ]);
+    if (limit != null) query.limit(limit, offset: offset);
+    // Keep only the latest snapshot for each row in this subscription.
+    // Drift may re-emit the whole result when a single session changes.
+    var decoded = <String, (String, PracticeSession)>{};
+    return query.watch().map((rows) {
+      final current = <String, (String, PracticeSession)>{};
+      for (final row in rows) {
+        final previous = decoded[row.id];
+        current[row.id] = previous != null && previous.$1 == row.payloadJson
+            ? previous
+            : (
+                row.payloadJson,
+                PracticeSession.fromJson(
+                  jsonDecode(row.payloadJson) as Map<String, dynamic>,
+                ),
+              );
+      }
+      decoded = current;
+      return current.values.map((entry) => entry.$2).toList();
+    });
+  }
 }

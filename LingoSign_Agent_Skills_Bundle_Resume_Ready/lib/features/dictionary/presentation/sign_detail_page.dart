@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 import '../domain/entities/sign_entry.dart';
+import 'sign_image_zoom.dart';
 
 class SignDetailPage extends StatefulWidget {
   const SignDetailPage({
@@ -78,11 +79,18 @@ class _SignDetailPageState extends State<SignDetailPage>
               padding: const EdgeInsets.symmetric(vertical: 20),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(24),
-                child: Image.asset(
-                  asset,
-                  semanticLabel: 'Minh họa ${entry.label}',
-                  errorBuilder: (_, _, _) =>
-                      const Text('Ảnh hướng dẫn chưa khả dụng.'),
+                child: SignImageZoom(
+                  asset: asset,
+                  label: entry.label,
+                  child: Image.asset(
+                    asset,
+                    height: 240,
+                    width: double.infinity,
+                    fit: BoxFit.contain,
+                    semanticLabel: 'Minh họa ${entry.label}',
+                    errorBuilder: (_, _, _) =>
+                        const Text('Ảnh hướng dẫn chưa khả dụng.'),
+                  ),
                 ),
               ),
             ),

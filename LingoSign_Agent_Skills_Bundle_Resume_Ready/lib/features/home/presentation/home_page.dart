@@ -36,19 +36,21 @@ class _HomePageState extends ConsumerState<HomePage>
   RecognitionPrediction? _latestPrediction;
   final _window = SelectWindowPrediction();
   Timer? _windowTimer;
-  Future<void> _saveQueue = Future<void>.value();
+  bool _saveInProgress = false;
   int _recordSequence = 0;
   final _savePolicy = RecognitionSavePolicy();
   bool _avoidDuplicates = false;
   bool _noHand = true;
   String? _recognitionStatus;
-  double _progress = 0;
+  final _progress = ValueNotifier<double>(0);
   Timer? _progressTimer;
   Timer? _absenceTimer;
 
   void _collectPrediction(RecognitionPrediction prediction) {
     if (!mounted || !_active) return;
-    setState(() => _noHand = prediction.isUnknown);
+    if (_noHand != prediction.isUnknown) {
+      setState(() => _noHand = prediction.isUnknown);
+    }
     if (prediction.isUnknown) {
       _absenceTimer ??= Timer(const Duration(seconds: 1), () {
         _absenceTimer = null;
@@ -60,16 +62,17 @@ class _HomePageState extends ConsumerState<HomePage>
       _absenceTimer?.cancel();
       _absenceTimer = null;
     }
+    if (_saveInProgress) return;
     _window.add(prediction);
     if (!prediction.isUnknown && _windowTimer == null) {
+      _progress.value = 0;
       setState(() {
-        _progress = 0;
         _recognitionStatus = 'Đang lấy mẫu trong 1 giây…';
       });
       _progressTimer = Timer.periodic(const Duration(milliseconds: 50), (
         timer,
       ) {
-        if (mounted) setState(() => _progress = (timer.tick / 20).clamp(0, 1));
+        if (mounted) _progress.value = (timer.tick / 20).clamp(0, 1);
       });
       _windowTimer = Timer(const Duration(seconds: 1), _finishWindow);
     }
@@ -81,23 +84,22 @@ class _HomePageState extends ConsumerState<HomePage>
     _progressTimer = null;
     final best = _window.take();
     if (!mounted || !_active || best == null) return;
+    _progress.value = 1;
     setState(() {
-      _progress = 1;
       _latestPrediction = best;
     });
     if (!_savePolicy.isConfident(best)) {
-      setState(
-        () => _recognitionStatus =
-            'Chưa chắc chắn, hãy thử lại. Không lưu kết quả này.',
-      );
+      setState(() => _recognitionStatus = 'Chưa nhận diện rõ. Hãy thử lại.');
       return;
     }
     if (_avoidDuplicates && _savePolicy.isDuplicate(best)) {
       setState(
-        () => _recognitionStatus = 'Ký hiệu này đã được lưu. Đổi ký hiệu hoặc rút tay khoảng 1 giây để nhận diện lại.',
+        () => _recognitionStatus =
+            'Đã lưu ký hiệu này. Đổi ký hiệu hoặc rút tay 1 giây.',
       );
       return;
     }
+    _saveInProgress = true;
     setState(() => _recognitionStatus = 'Đang lưu kết quả…');
     _savePolicy.saved(best);
     final now = DateTime.now();
@@ -113,7 +115,7 @@ class _HomePageState extends ConsumerState<HomePage>
     final photo = camera is HistoryPhotoCamera
         ? (camera as HistoryPhotoCamera).captureHistoryPhoto()
         : null;
-    _saveQueue = _saveQueue.then((_) async {
+    unawaited(() async {
       try {
         final bytes = await photo;
         await repository.saveConfirmed(record, photo: bytes);
@@ -128,8 +130,10 @@ class _HomePageState extends ConsumerState<HomePage>
       } catch (_) {
         if (identical(_latestPrediction, best)) _savePolicy.reset();
         if (mounted) setState(() => _message = 'Không lưu được lịch sử.');
+      } finally {
+        _saveInProgress = false;
       }
-    });
+    }());
   }
 
   void _resetWindow() {
@@ -137,7 +141,7 @@ class _HomePageState extends ConsumerState<HomePage>
     _windowTimer = null;
     _progressTimer?.cancel();
     _progressTimer = null;
-    _progress = 0;
+    _progress.value = 0;
     _window.take();
   }
 
@@ -154,6 +158,7 @@ class _HomePageState extends ConsumerState<HomePage>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
+      if (!_foreground) return;
       _foreground = false;
       _interruptedByBackground = true;
       _backgroundClose = _closeForBackground();
@@ -197,6 +202,10 @@ class _HomePageState extends ConsumerState<HomePage>
       result = const CameraOpenFailed(CameraOpenFailure.unavailable);
     }
     if (!mounted) return;
+    if (!_resumeWhenForeground) {
+      setState(() => _opening = false);
+      return;
+    }
     if (!_foreground && result is CameraOpened) {
       try {
         await _gateway?.close();
@@ -265,6 +274,7 @@ class _HomePageState extends ConsumerState<HomePage>
   void dispose() {
     _absenceTimer?.cancel();
     _resetWindow();
+    _progress.dispose();
     WidgetsBinding.instance.removeObserver(this);
     final subscription = _predictionSubscription;
     if (subscription != null) unawaited(subscription.cancel());
@@ -377,9 +387,12 @@ class _HomePageState extends ConsumerState<HomePage>
             ),
           ),
           const SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: _progress,
-            semanticsLabel: 'Tiến trình lấy mẫu 1 giây',
+          ValueListenableBuilder<double>(
+            valueListenable: _progress,
+            builder: (context, progress, _) => LinearProgressIndicator(
+              value: progress,
+              semanticsLabel: 'Tiến trình lấy mẫu 1 giây',
+            ),
           ),
           if (_recognitionStatus != null) Text(_recognitionStatus!),
           const SizedBox(height: 16),
@@ -395,8 +408,14 @@ class _HomePageState extends ConsumerState<HomePage>
               canLearn ? 'Luyện tập và kiểm tra' : 'Đăng nhập để luyện tập',
             ),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () =>
-                canLearn ? context.push('/practice') : context.go('/settings'),
+            onTap: () {
+              if (_active || _opening) _stopCamera();
+              if (canLearn) {
+                context.push('/practice');
+              } else {
+                context.go('/settings');
+              }
+            },
           ),
         ),
         const SizedBox(height: 12),

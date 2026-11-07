@@ -55,6 +55,7 @@ class FakeCameraGateway implements CameraGateway {
 
   CameraOpenResult nextResult;
   int opens = 0;
+  int previewReads = 0;
   int closes = 0;
   int _generation = 0;
   Completer<void>? pendingOpen;
@@ -64,8 +65,13 @@ class FakeCameraGateway implements CameraGateway {
   Stream<RecognitionPrediction> get predictions => predictionEvents.stream;
 
   @override
-  Widget? get preview =>
-      const ColoredBox(key: Key('fake-camera-preview'), color: Colors.black);
+  Widget? get preview {
+    previewReads++;
+    return const ColoredBox(
+      key: Key('fake-camera-preview'),
+      color: Colors.black,
+    );
+  }
 
   @override
   Future<CameraOpenResult> open() async {
@@ -86,8 +92,15 @@ class FakeCameraGateway implements CameraGateway {
 }
 
 class FakePhotoCamera extends FakeCameraGateway implements HistoryPhotoCamera {
+  Completer<void>? photoGate;
+  int captures = 0;
+
   @override
-  Future<Uint8List?> captureHistoryPhoto() async => Uint8List.fromList([7, 8]);
+  Future<Uint8List?> captureHistoryPhoto() async {
+    captures++;
+    await photoGate?.future;
+    return Uint8List.fromList([7, 8]);
+  }
 }
 
 void main() {
@@ -130,7 +143,10 @@ void main() {
 
     await tester.scrollUntilVisible(find.byType(LinearProgressIndicator), 300);
     await emit('A', .4);
+    final previewReads = camera.previewReads;
+    await emit('A', .35);
     await tester.pump(const Duration(milliseconds: 500));
+    expect(camera.previewReads, previewReads);
     expect(
       tester
           .widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator))
@@ -139,7 +155,7 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 500));
     expect(history.records, isEmpty);
-    expect(find.textContaining('Chưa chắc chắn'), findsOneWidget);
+    expect(find.textContaining('Chưa nhận diện rõ'), findsOneWidget);
     await emit('A', .8);
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
@@ -189,10 +205,11 @@ void main() {
     expect(find.byType(InteractiveViewer), findsNothing);
     expect(find.text('Trang 1'), findsOneWidget);
   });
-  testWidgets('saves photo with each window while camera remains active', (
+  testWidgets('slow photo cannot pile up saves and camera resumes sampling', (
     tester,
   ) async {
-    final camera = FakePhotoCamera();
+    final gate = Completer<void>();
+    final camera = FakePhotoCamera()..photoGate = gate;
     final history = FakeHistory();
     await tester.pumpWidget(
       ProviderScope(
@@ -206,7 +223,7 @@ void main() {
     await tester.scrollUntilVisible(find.text('Bắt đầu camera'), 300);
     await tester.tap(find.text('Bắt đầu camera'));
     await tester.pumpAndSettle();
-    for (var i = 0; i < 2; i++) {
+    Future<void> presentSign() async {
       camera.predictionEvents.add(
         RecognitionPrediction(
           labelId: 'A',
@@ -219,6 +236,17 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
       await tester.pump();
     }
+
+    await presentSign();
+    await presentSign();
+    await presentSign();
+    expect(camera.captures, 1);
+    expect(history.records, isEmpty);
+    gate.complete();
+    await tester.pump();
+    expect(history.records.length, 1);
+    await presentSign();
+    expect(camera.captures, 2);
     expect(history.records.length, 2);
     expect(history.lastPhoto, [7, 8]);
     expect(camera.closes, 0);

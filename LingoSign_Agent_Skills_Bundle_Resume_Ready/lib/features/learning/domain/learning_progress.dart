@@ -7,7 +7,8 @@ class DayProgress {
 }
 
 class LearningProgress {
-  LearningProgress(List<PracticeSession> sessions) {
+  LearningProgress(List<PracticeSession> sessions)
+    : sessionCount = sessions.length {
     completed = sessions.where((session) => session.complete).length;
     for (final session in sessions) {
       for (final answer in session.answers) {
@@ -34,6 +35,7 @@ class LearningProgress {
       }
     }
   }
+  final int sessionCount;
   late final int completed;
   int graded = 0, correct = 0, skipped = 0;
   final activeDays = <DateTime>{};

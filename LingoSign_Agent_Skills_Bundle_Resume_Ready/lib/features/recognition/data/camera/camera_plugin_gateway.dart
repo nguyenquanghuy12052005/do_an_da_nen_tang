@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -23,6 +24,7 @@ class CameraPluginGateway implements CameraGateway, HistoryPhotoCamera {
   Future<Uint8List?> _capturePhoto() async {
     final controller = _controller;
     if (controller == null || !controller.value.isInitialized) return null;
+    final trace = TimelineTask()..start('LingoSign.captureHistoryPhoto');
     File? temporaryFile;
     ui.Codec? codec;
     ui.Image? thumbnail;
@@ -39,6 +41,7 @@ class CameraPluginGateway implements CameraGateway, HistoryPhotoCamera {
     } catch (_) {
       return null;
     } finally {
+      trace.finish();
       thumbnail?.dispose();
       codec?.dispose();
       if (temporaryFile != null) {
@@ -57,7 +60,18 @@ class CameraPluginGateway implements CameraGateway, HistoryPhotoCamera {
   OfflineForestModel? _model;
   final _predictions = StreamController<RecognitionPrediction>.broadcast();
   int _generation = 0;
-  int _lastFrameMs = 0;
+  final _frameClock = Stopwatch();
+  Future<OfflineForestModel>? _modelLoad;
+  Future<void>? _closing;
+
+  Future<OfflineForestModel> _loadModel() async {
+    try {
+      return await (_modelLoad ??= OfflineForestModel.load());
+    } on Object {
+      _modelLoad = null;
+      rethrow;
+    }
+  }
 
   @override
   Stream<RecognitionPrediction> get predictions => _predictions.stream;
@@ -74,6 +88,10 @@ class CameraPluginGateway implements CameraGateway, HistoryPhotoCamera {
     if (_controller != null) await close();
     final generation = ++_generation;
     try {
+      await _closing;
+      if (generation != _generation) {
+        return const CameraOpenFailed(CameraOpenFailure.unavailable);
+      }
       final cameras = await availableCameras();
       if (generation != _generation) {
         return const CameraOpenFailed(CameraOpenFailure.unavailable);
@@ -96,27 +114,35 @@ class CameraPluginGateway implements CameraGateway, HistoryPhotoCamera {
       if (generation != _generation) {
         return const CameraOpenFailed(CameraOpenFailure.unavailable);
       }
-      final model = await OfflineForestModel.load();
+      final model = await _loadModel();
       if (generation != _generation) {
         return const CameraOpenFailed(CameraOpenFailure.unavailable);
       }
-      final landmarker = HandLandmarkerPlugin.create(
+      // The plugin only drops its JNI reference on dispose. Reuse its
+      // MediaPipe graph instead of constructing another one on each open.
+      final landmarker = _landmarker ??= HandLandmarkerPlugin.create(
         numHands: 1,
         delegate: HandLandmarkerDelegate.cpu,
       );
       _model = model;
-      _landmarker = landmarker;
-      _handSubscription = landmarker.landmarkStream.listen(_onHands);
+      _handSubscription = landmarker.landmarkStream.listen(
+        (hands) {
+          if (generation == _generation) _onHands(hands);
+        },
+        onError: (Object error, StackTrace stack) {
+          debugPrint('Hand tracking stream failed: ${error.runtimeType}');
+        },
+      );
       await controller.startImageStream(_onCameraImage);
       if (generation != _generation) {
         return const CameraOpenFailed(CameraOpenFailure.unavailable);
       }
       return const CameraOpened();
     } on CameraException catch (error) {
-      await close();
+      if (generation == _generation) await close();
       return CameraOpenFailed(_mapFailure(error.code));
     } on Exception {
-      await close();
+      if (generation == _generation) await close();
       return const CameraOpenFailed(CameraOpenFailure.unavailable);
     }
   }
@@ -127,18 +153,30 @@ class CameraPluginGateway implements CameraGateway, HistoryPhotoCamera {
     if (landmarker == null || controller == null || image.planes.length < 3) {
       return;
     }
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
-    if (nowMs - _lastFrameMs < 100) return;
-    _lastFrameMs = nowMs;
+    if (_frameClock.isRunning && _frameClock.elapsedMilliseconds < 100) {
+      return;
+    }
+    _frameClock
+      ..reset()
+      ..start();
     try {
-      landmarker.processFrame(image, controller.description.sensorOrientation);
+      Timeline.timeSync('LingoSign.submitCameraFrame', () {
+        landmarker.processFrame(
+          image,
+          controller.description.sensorOrientation,
+        );
+      });
     } on Exception {
       // Camera preview can continue if a single frame cannot be decoded.
     }
   }
 
   void _onHands(List<Hand> hands) {
-    if (_controller == null || _predictions.isClosed) return;
+    if (_controller == null ||
+        !_frameClock.isRunning ||
+        _predictions.isClosed) {
+      return;
+    }
     if (hands.isEmpty || hands.first.landmarks.length != 21) {
       _predictions.add(
         RecognitionPrediction(
@@ -154,8 +192,10 @@ class CameraPluginGateway implements CameraGateway, HistoryPhotoCamera {
       final points = hands.first.landmarks
           .map((point) => HandPoint(point.x, point.y))
           .toList(growable: false);
-      final features = extractHandFeatures(points);
-      final prediction = _model!.predict(features);
+      final prediction = Timeline.timeSync(
+        'LingoSign.classifyLandmarks',
+        () => _model!.predict(extractHandFeatures(points)),
+      );
       _predictions.add(
         RecognitionPrediction(
           labelId: prediction.label,
@@ -170,23 +210,29 @@ class CameraPluginGateway implements CameraGateway, HistoryPhotoCamera {
   }
 
   @override
-  Future<void> close() async {
-    await _photoTask;
+  Future<void> close() {
     _generation++;
+    return _closing ??= _releaseCamera().whenComplete(() => _closing = null);
+  }
+
+  Future<void> _releaseCamera() async {
     final controller = _controller;
     _controller = null;
     final subscription = _handSubscription;
     _handSubscription = null;
-    final landmarker = _landmarker;
-    _landmarker = null;
     _model = null;
-    _lastFrameMs = 0;
-    await subscription?.cancel();
-    if (controller != null && controller.value.isStreamingImages) {
-      await controller.stopImageStream();
+    _frameClock
+      ..stop()
+      ..reset();
+    try {
+      await subscription?.cancel();
+      await _photoTask;
+      if (controller != null && controller.value.isStreamingImages) {
+        await controller.stopImageStream();
+      }
+    } finally {
+      await controller?.dispose();
     }
-    landmarker?.dispose();
-    if (controller != null) await controller.dispose();
   }
 
   CameraOpenFailure _mapFailure(String code) => switch (code) {

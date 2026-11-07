@@ -6,6 +6,7 @@ import 'firebase_session.dart';
 import 'package:flutter/services.dart';
 
 import '../features/learning/domain/practice_session.dart';
+import '../features/learning/domain/learning_progress.dart';
 import '../data/local/repositories/local_learning_repository.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,6 +35,17 @@ final learningRepositoryProvider = Provider<LearningRepository>(
 final learningSessionsProvider =
     StreamProvider.autoDispose<List<PracticeSession>>(
       (ref) => ref.watch(learningRepositoryProvider).watchSessions(),
+    );
+final learningProgressProvider =
+    Provider.autoDispose<AsyncValue<LearningProgress>>(
+      (ref) =>
+          ref.watch(learningSessionsProvider).whenData(LearningProgress.new),
+    );
+final learningHistoryPageProvider = StreamProvider.autoDispose
+    .family<List<PracticeSession>, ({int limit, int offset})>(
+      (ref, page) => ref
+          .watch(learningRepositoryProvider)
+          .watchSessions(limit: page.limit, offset: page.offset),
     );
 final historyRepositoryProvider = Provider<RecognitionHistoryRepository>(
   (ref) => LocalRecognitionHistoryRepository(ref.watch(appDatabaseProvider)),

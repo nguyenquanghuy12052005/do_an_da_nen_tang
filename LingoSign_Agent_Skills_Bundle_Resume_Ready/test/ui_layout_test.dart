@@ -18,11 +18,14 @@ import 'package:lingosign_ai/features/dictionary/domain/repositories/sign_dictio
 import 'package:lingosign_ai/features/dictionary/presentation/dictionary_page.dart';
 
 class SearchFixture implements SignDictionaryRepository {
+  SearchFixture([this.entries = const []]);
+
+  final List<SignEntry> entries;
   final queries = <String>[];
   @override
   Future<List<SignEntry>> search(String query) async {
     queries.add(query);
-    return [];
+    return entries;
   }
 
   @override
@@ -30,6 +33,47 @@ class SearchFixture implements SignDictionaryRepository {
 }
 
 void main() {
+  testWidgets('dictionary images open zoom from card and details', (
+    tester,
+  ) async {
+    final repository = SearchFixture(const [
+      SignEntry(
+        code: 'A',
+        label: 'Chữ A',
+        imageAsset: 'assets/dictionary/signs/A.png',
+      ),
+    ]);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          dictionaryRepositoryProvider.overrideWithValue(repository),
+          bundledDictionaryProvider.overrideWith((ref) async {}),
+          supportedPracticeLabelsProvider.overrideWith((ref) async => {'A'}),
+        ],
+        child: const MaterialApp(home: Scaffold(body: DictionaryPage())),
+      ),
+    );
+    await tester.pumpAndSettle();
+    for (var i = 0; i < 2; i++) {
+      if (i == 1) {
+        await tester.tap(find.text('Chữ A'));
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.byTooltip('Phóng to ảnh Chữ A'));
+      await tester.pumpAndSettle();
+      expect(find.text('Ảnh minh họa Chữ A'), findsOneWidget);
+      expect(
+        tester
+            .widget<InteractiveViewer>(find.byType(InteractiveViewer))
+            .maxScale,
+        5,
+      );
+      await tester.tap(find.byTooltip('Đóng ảnh'));
+      await tester.pumpAndSettle();
+      expect(find.byType(InteractiveViewer), findsNothing);
+    }
+  });
+
   testWidgets(
     'dictionary debounces typing, clears search and cancels on dispose',
     (tester) async {
@@ -84,6 +128,9 @@ void main() {
             learningSessionsProvider.overrideWith(
               (ref) => Stream.value([session]),
             ),
+            learningHistoryPageProvider.overrideWith(
+              (ref, page) => Stream.value([session]),
+            ),
           ],
           child: MaterialApp(
             theme: AppTheme.dark,
@@ -108,6 +155,63 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+  testWidgets('learning history pages through all practice sessions', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 1500);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final sessions = List.generate(
+      7,
+      (i) => PracticeSession(
+        id: 'page-session-$i',
+        startedAt: DateTime(2026, 11, 7, 10, 7 - i),
+        targets: ['A'],
+      ),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          learningSessionsProvider.overrideWith(
+            (ref) => Stream.value(sessions),
+          ),
+          learningHistoryPageProvider.overrideWith(
+            (ref, page) => Stream.value(
+              sessions.skip(page.offset).take(page.limit).toList(),
+            ),
+          ),
+        ],
+        child: const MaterialApp(home: Scaffold(body: LearningPage())),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final next = find.byWidgetPredicate(
+      (widget) =>
+          widget is IconButton && widget.tooltip == 'Trang bài luyện sau',
+    );
+    final previous = find.byWidgetPredicate(
+      (widget) =>
+          widget is IconButton && widget.tooltip == 'Trang bài luyện trước',
+    );
+    expect(find.text('Trang 1/2'), findsOneWidget);
+    expect(find.byKey(const ValueKey('page-session-4')), findsOneWidget);
+    expect(find.byKey(const ValueKey('page-session-5')), findsNothing);
+    expect(tester.widget<IconButton>(previous).onPressed, isNull);
+
+    await tester.tap(next);
+    await tester.pumpAndSettle();
+    expect(find.text('Trang 2/2'), findsOneWidget);
+    expect(find.byKey(const ValueKey('page-session-6')), findsOneWidget);
+    expect(find.byKey(const ValueKey('page-session-4')), findsNothing);
+    expect(tester.widget<IconButton>(next).onPressed, isNull);
+
+    await tester.tap(previous);
+    await tester.pumpAndSettle();
+    expect(find.text('Trang 1/2'), findsOneWidget);
+  });
+
   testWidgets('phone layout, large text and reduced motion remain usable', (
     tester,
   ) async {

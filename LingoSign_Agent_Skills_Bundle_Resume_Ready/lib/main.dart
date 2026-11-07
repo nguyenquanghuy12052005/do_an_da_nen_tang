@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lingosign_ai/app/app.dart';
 import 'package:lingosign_ai/app/camera_gateway.dart';
 import 'package:lingosign_ai/app/firebase_session.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:lingosign_ai/app/theme/theme_mode_controller.dart';
 import 'package:lingosign_ai/features/recognition/data/camera/camera_plugin_gateway.dart';
 
 Future<void> main() async {
@@ -75,6 +77,8 @@ class _SessionApp extends StatefulWidget {
   State<_SessionApp> createState() => _SessionAppState();
 }
 
+final _themePreferences = ThemeModePreferences(getApplicationSupportDirectory);
+
 class _SessionAppState extends State<_SessionApp> {
   final _camera = CameraPluginGateway();
 
@@ -82,6 +86,7 @@ class _SessionAppState extends State<_SessionApp> {
   Widget build(BuildContext context) => ProviderScope(
     overrides: [
       cameraGatewayProvider.overrideWithValue(_camera),
+      themeModePreferencesProvider.overrideWithValue(_themePreferences),
       firebaseSessionProvider.overrideWithValue(widget.session),
     ],
     child: const LingoSignApp(),

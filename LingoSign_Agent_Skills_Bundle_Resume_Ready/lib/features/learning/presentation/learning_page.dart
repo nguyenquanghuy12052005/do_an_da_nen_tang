@@ -6,19 +6,36 @@ import '../../../app/local_data_providers.dart';
 import '../../../app/design_components.dart';
 import '../domain/learning_progress.dart';
 
-class LearningPage extends ConsumerWidget {
+class LearningPage extends ConsumerStatefulWidget {
   const LearningPage({super.key});
   @override
-  Widget build(BuildContext context, WidgetRef ref) => ref
-      .watch(learningSessionsProvider)
+  ConsumerState<LearningPage> createState() => _LearningPageState();
+}
+
+class _LearningPageState extends ConsumerState<LearningPage> {
+  static const _pageSize = 5;
+  int _pageIndex = 0;
+
+  @override
+  Widget build(BuildContext context) => ref
+      .watch(learningProgressProvider)
       .when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, _) => const EmptyPanel(
           icon: Icons.error_outline,
           message: 'Chưa tải được tiến độ học tập.',
         ),
-        data: (sessions) {
-          final progress = LearningProgress(sessions);
+        data: (progress) {
+          final pageCount =
+              (progress.sessionCount + _pageSize - 1) ~/ _pageSize;
+          final page = pageCount == 0 ? 0 : _pageIndex.clamp(0, pageCount - 1);
+          final sessionPage = ref.watch(
+            learningHistoryPageProvider((
+              limit: _pageSize,
+              offset: page * _pageSize,
+            )),
+          );
+          final visibleSessions = sessionPage.value ?? const [];
           final days = progress.days.keys.toList()..sort();
           final mistakes = progress.mistakes.entries.toList()
             ..sort((a, b) => b.value.compareTo(a.value));
@@ -109,15 +126,19 @@ class LearningPage extends ConsumerWidget {
                 ),
               ],
               const SizedBox(height: 24),
-              const PanelHeading('Các bài gần đây'),
-              if (sessions.isEmpty)
+              const PanelHeading('Lịch sử bài luyện'),
+              if (sessionPage.isLoading)
+                const Center(child: CircularProgressIndicator()),
+              if (sessionPage.hasError)
+                const Text('Chưa tải được trang bài luyện.'),
+              if (progress.sessionCount == 0)
                 const Card(
                   child: ListTile(
                     leading: Icon(Icons.history),
                     title: Text('Chưa có bài luyện.'),
                   ),
                 ),
-              for (final (index, session) in sessions.take(20).indexed) ...[
+              for (final (index, session) in visibleSessions.indexed) ...[
                 if (index > 0) const SizedBox(height: 10),
                 Card(
                   key: ValueKey(session.id),
@@ -162,6 +183,32 @@ class LearningPage extends ConsumerWidget {
                   ),
                 ),
               ],
+              if (pageCount > 1)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 12,
+                    children: [
+                      IconButton(
+                        tooltip: 'Trang bài luyện trước',
+                        onPressed: page == 0
+                            ? null
+                            : () => setState(() => _pageIndex = page - 1),
+                        icon: const Icon(Icons.chevron_left),
+                      ),
+                      Text('Trang ${page + 1}/$pageCount'),
+                      IconButton(
+                        tooltip: 'Trang bài luyện sau',
+                        onPressed: page + 1 == pageCount
+                            ? null
+                            : () => setState(() => _pageIndex = page + 1),
+                        icon: const Icon(Icons.chevron_right),
+                      ),
+                    ],
+                  ),
+                ),
             ],
           );
         },

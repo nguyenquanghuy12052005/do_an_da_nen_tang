@@ -100,5 +100,5 @@ class PracticeSession {
 
 abstract interface class LearningRepository {
   Future<void> save(PracticeSession session);
-  Stream<List<PracticeSession>> watchSessions();
+  Stream<List<PracticeSession>> watchSessions({int? limit, int offset = 0});
 }

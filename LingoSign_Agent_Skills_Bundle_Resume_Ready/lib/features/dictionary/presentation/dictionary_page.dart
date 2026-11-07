@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:go_router/go_router.dart';
 
 import 'sign_detail_page.dart';
+import 'sign_image_zoom.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -198,12 +199,16 @@ class _SignCard extends StatelessWidget {
                       )
                     : ClipRRect(
                         borderRadius: BorderRadius.circular(18),
-                        child: Image.asset(
-                          entry.imageAsset!,
-                          width: 82,
-                          height: 82,
-                          fit: BoxFit.contain,
-                          excludeFromSemantics: true,
+                        child: SignImageZoom(
+                          asset: entry.imageAsset!,
+                          label: entry.label,
+                          child: Image.asset(
+                            entry.imageAsset!,
+                            width: 82,
+                            height: 82,
+                            fit: BoxFit.contain,
+                            excludeFromSemantics: true,
+                          ),
                         ),
                       ),
               ),

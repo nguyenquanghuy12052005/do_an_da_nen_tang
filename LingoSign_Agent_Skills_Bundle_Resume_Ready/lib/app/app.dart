@@ -11,7 +11,7 @@ class LingoSignApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(syncControllerProvider);
+    ref.listen(syncControllerProvider, (_, _) {});
     return MaterialApp.router(
       title: 'LingoSign AI',
       debugShowCheckedModeBanner: false,

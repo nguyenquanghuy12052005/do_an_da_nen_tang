@@ -69,6 +69,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/silent_moon/
+    - assets/practice_mascot/
     - assets/dictionary/
     - assets/dictionary/signs/
     - assets/model/model.json

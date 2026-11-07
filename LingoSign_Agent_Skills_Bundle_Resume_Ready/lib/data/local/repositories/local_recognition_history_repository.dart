@@ -19,11 +19,13 @@ class LocalRecognitionHistoryRepository
   final AppDatabase database;
   final Future<Directory> Function() photoDirectory;
 
-  Future<File> _photoFile(String name) async {
+  Future<File> _photoFile(String name) async =>
+      _photoFileIn(await photoDirectory(), name);
+
+  static File _photoFileIn(Directory root, String name) {
     if (!RegExp(r'^[a-zA-Z0-9_-]+\.png$').hasMatch(name)) {
       throw ArgumentError('Invalid photo name');
     }
-    final root = await photoDirectory();
     return File('${root.path}/history_photos/$name');
   }
 
@@ -73,12 +75,21 @@ class LocalRecognitionHistoryRepository
       );
     }
     if (limit != null) query.limit(limit);
-    return query.watch().asyncMap(
-      (rows) async => [
-        for (final row in rows)
-          await _toEntity(row.readTable(table), row.readTableOrNull(reviews)),
-      ],
-    );
+    return query.watch().asyncMap((rows) async {
+      Directory? photoRoot;
+      final records = <RecognitionRecord>[];
+      for (final row in rows) {
+        final history = row.readTable(table);
+        final name = history.imageRelativePath;
+        final imagePath = name == null
+            ? null
+            : _photoFileIn(photoRoot ??= await photoDirectory(), name).path;
+        records.add(
+          _toEntity(history, row.readTableOrNull(reviews), imagePath),
+        );
+      }
+      return records;
+    });
   }
 
   @override
@@ -183,10 +194,11 @@ class LocalRecognitionHistoryRepository
         );
   });
 
-  Future<RecognitionRecord> _toEntity(
+  RecognitionRecord _toEntity(
     RecognitionHistoryRow row,
     HistoryReview? review,
-  ) async => RecognitionRecord(
+    String? imagePath,
+  ) => RecognitionRecord(
     id: row.id,
     signCode: row.signCode,
     label: row.labelSnapshot,
@@ -194,9 +206,7 @@ class LocalRecognitionHistoryRepository
     favorite: review?.favorite ?? false,
     incorrect: review?.incorrect ?? false,
     note: review?.note,
-    imagePath: row.imageRelativePath == null
-        ? null
-        : (await _photoFile(row.imageRelativePath!)).path,
+    imagePath: imagePath,
     confirmedAt: DateTime.fromMillisecondsSinceEpoch(
       row.confirmedAtUtcMs,
       isUtc: true,
