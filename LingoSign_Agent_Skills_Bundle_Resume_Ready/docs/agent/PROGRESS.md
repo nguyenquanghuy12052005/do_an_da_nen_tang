@@ -9,6 +9,18 @@
 
 ## Latest checkpoint — TASK-007
 
+- **2026-11-07 Asia/Bangkok | TASK-013 Silent Moon dark and illustrations DONE:** Read Figma via the official plugin; Welcome Sleep frame 3:2912 informed navy #03174C and periwinkle UI. Four unchanged SVG layers from 3:2990 bundled and composed on idle recognition and AuthPage; source recorded in UI_DESIGN.md. Verified asset root sizes and Flutter rendering, including a real emulator dark preview. Analyze clean; 61 Flutter tests passed, then 15 focused tests passed after improving selected nav contrast. Final Firebase debug x64 APK built, installed and opened on emulator; storage reserve restored. Work uncommitted; PLAN unchanged. NEXT: open Settings → Dark Mode to review final UI.
+
+
+- **2026-11-07 Asia/Bangkok | TASK-013 meditation-inspired UI DONE:** Both Figma node links unavailable through web tooling. Used publicly visible Silent Moon previews as fallback and UI UX Pro Max guidance. Updated shared theme, shell, panels, recognition layout, dictionary responsive grid, history presentation, Learning/Practice, Settings, and Auth palette. Analyze clean, 61 Flutter tests passed, home preview visually reviewed, Firebase Android debug x64 APK built/installed, and live dictionary detail opened. Emulator storage reserve restored after install. Uncommitted; PLAN unchanged. NEXT: user reviews the installed UI; exact frame comparison requires readable Figma frames.
+
+
+- **2026-11-07 Asia/Bangkok | TASK-011 auth form DONE:** Settings opens a dedicated AuthPage based on the user reference and UI UX Pro Max, with email/password only, confirm password, inline errors, and responsive scroll. Files: account_settings.dart, auth_page.dart, test/auth_page_test.dart. Format/analyze clean; 61 Flutter tests passed, including navigation to the full page and mocked Firebase login/registration validation on a narrow screen. Firebase-configured debug x64 APK built and installed via ADB install -r; app launched and emulator storage reserve restored. Existing session retained; live account sign-out and re-registration not run. Uncommitted, PLAN unchanged. NEXT: user may sign out then tap Cài đặt → Đăng nhập to view the new form.
+
+
+- **2026-11-07 Asia/Bangkok | TASK-013 targeted layout DONE:** Used UI UX Pro Max to align Learning and Settings header/card margins, separate groups and list cards, and add responsive progress metrics. Settings groups account, sync and appearance; Learning recent cards still expand and retry tiles preserve their route. Changed lib/app/design_components.dart, Learning/Settings/Account/Sync presentation, and test/ui_layout_test.dart; cleaned existing startup diagnostic lints in lib/main.dart. Full analyze clean, 59 Flutter tests passed including narrow dark/large-text expansion, diff check clean, Firebase-configured Android x64 debug build and install succeeded. Both tab layouts checked live via emulator UI hierarchy; left Học tập open. Temporarily adjusted emulator storage reserve for install and restored it. Work uncommitted; PLAN unchanged. NEXT: user reviews appearance on emulator.
+
+
 - **2026-11-07 | TASK-012 readable Firestore events NEEDS_VERIFY:** Firebase live app previously installed, user observed history and learning sync events in Console. Added type, summary, occurredAt, details (recognized letter or graded answers) in Firestore adapter; original payload retained for old clients and retries. Updated firestore.rules to allow the new fields with owner-only create/read and accept legacy documents. No backfill or cloud rules publication performed. NEXT: publish firestore.rules, reinstall app, create a new recognition and practice event and inspect fields.
 
 

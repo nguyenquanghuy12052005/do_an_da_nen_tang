@@ -108,9 +108,7 @@ class _HistoryReviewSheetState extends ConsumerState<HistoryReviewSheet> {
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Nhận diện sai'),
-              subtitle: const Text(
-                'Lưu phản hồi riêng, giữ nguyên dự đoán gốc. Chưa dùng để huấn luyện model.',
-              ),
+              subtitle: const Text('Lưu phản hồi cho lượt nhận diện này.'),
               value: _incorrect,
               onChanged: _saving ? null : (value) => _save(incorrect: value),
             ),

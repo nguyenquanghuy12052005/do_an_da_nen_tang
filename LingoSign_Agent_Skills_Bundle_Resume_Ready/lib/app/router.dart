@@ -1,3 +1,5 @@
+import 'firebase_session.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 
@@ -12,8 +14,15 @@ import 'package:lingosign_ai/features/history/presentation/history_page.dart';
 import 'package:lingosign_ai/features/settings/presentation/settings_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final canLearn = ref.watch(firebaseSessionProvider)?.user != null;
   final router = GoRouter(
     initialLocation: '/',
+    redirect: (context, state) {
+      final path = state.uri.path;
+      return !canLearn && (path == '/learning' || path == '/practice')
+          ? '/settings'
+          : null;
+    },
     routes: [
       GoRoute(
         path: '/practice',
@@ -25,8 +34,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       ShellRoute(
-        builder: (context, state, child) =>
-            AppShell(location: state.uri.path, child: child),
+        builder: (context, state, child) => AppShell(
+          location: state.uri.path,
+          canLearn: canLearn,
+          child: child,
+        ),
         routes: [
           GoRoute(
             path: '/learning',

@@ -23,3 +23,8 @@ Skill đã cài có thể được nhận diện tự động ở lượt tiếp
 ## User reference update — 2026-11-03
 
 Applied supplied indigo/amber mobile reference to shared theme, app bar, navigation indicator, rounded section banners and illustrated dictionary cards. Retained semantic dark colors and reduced-motion handling. Skill design-system search education/mobile/cards supplied spacing/accessibility guidance; reference colors take precedence over its orange palette suggestion. Source chart cropped into 36 native-resolution images padded to108px; no synthesized hand geometry. Original source retained. Catalog does not assert a language system or original license that was not provided. Digits cannot launch model practice. All56 Flutter tests and analysis pass; Android APK builds. Emulator unavailable for installation this turn.
+
+
+### Silent Moon dark palette and artwork
+
+Source: [Silent Moon, Welcome Sleep](https://www.figma.com/design/TQXf1Q6g7ba5krRQGuYUKc/Meditation-app-UI--Community-?node-id=3-2912). The four local SVG layers in assets/silent_moon come from node 3:2990. LingoSign uses the original composition on the idle camera and authentication header. Dark navy #03174C and periwinkle controls are adapted to Material 3.

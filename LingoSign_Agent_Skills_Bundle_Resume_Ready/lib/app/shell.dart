@@ -1,60 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'design_components.dart';
-
 class AppShell extends StatelessWidget {
-  const AppShell({super.key, required this.location, required this.child});
+  const AppShell({
+    super.key,
+    required this.location,
+    required this.child,
+    required this.canLearn,
+  });
 
   final String location;
   final Widget child;
+  final bool canLearn;
 
   static const _paths = [
     '/',
     '/dictionary',
     '/history',
-    '/settings',
     '/learning',
+    '/settings',
   ];
   static const _titles = [
     'Nhận diện',
     'Từ điển',
     'Lịch sử',
-    'Cài đặt',
     'Học tập',
+    'Cài đặt',
   ];
 
   @override
   Widget build(BuildContext context) {
     final index = _paths.indexOf(location);
     final selectedIndex = index < 0 ? 0 : index;
-    final accent = AppAccents.colors[selectedIndex];
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: AppAccents.tint(context, accent),
       appBar: AppBar(
-        foregroundColor: Colors.white,
-        flexibleSpace: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                accent,
-                Color.lerp(accent, const Color(0xFF21284F), .35)!,
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
+        foregroundColor: scheme.onSurface,
         leading: Padding(
           padding: const EdgeInsets.all(10),
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.secondaryContainer,
+              color: scheme.primaryContainer,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               Icons.sign_language_outlined,
-              color: Theme.of(context).colorScheme.onSecondaryContainer,
+              color: scheme.onPrimaryContainer,
             ),
           ),
         ),
@@ -68,7 +59,7 @@ class AppShell extends StatelessWidget {
             child: Text(
               _titles[selectedIndex],
               style: Theme.of(context).textTheme.labelLarge
-                  ?.copyWith(color: Colors.white),
+                  ?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ),
         ],
@@ -91,32 +82,48 @@ class AppShell extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: selectedIndex,
-        indicatorColor: AppAccents.tint(context, accent),
-        onDestinationSelected: (value) => context.go(_paths[value]),
-        destinations: [
-          NavigationDestination(
-            icon: Icon(Icons.sign_language, color: AppAccents.colors[0]),
-            label: 'Nhận diện',
+      bottomNavigationBar: DecoratedBox(
+        decoration: BoxDecoration(
+          color: scheme.surface,
+          border: Border(
+            top: BorderSide(
+              color: scheme.outlineVariant.withValues(alpha: .55),
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.menu_book, color: AppAccents.colors[1]),
-            label: 'Từ điển',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.history, color: AppAccents.colors[2]),
-            label: 'Lịch sử',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings, color: AppAccents.colors[3]),
-            label: 'Cài đặt',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.school_outlined, color: AppAccents.colors[4]),
-            label: 'Học tập',
-          ),
-        ],
+        ),
+        child: NavigationBar(
+          selectedIndex: selectedIndex,
+
+          onDestinationSelected: (value) => context.go(_paths[value]),
+          destinations: [
+            NavigationDestination(
+              icon: const Icon(Icons.sign_language_outlined),
+              label: 'Nhận diện',
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.menu_book_outlined),
+              label: 'Từ điển',
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.history_rounded),
+              label: 'Lịch sử',
+            ),
+            NavigationDestination(
+              enabled: canLearn,
+              icon: canLearn
+                  ? const Icon(Icons.school_outlined)
+                  : const Icon(Icons.lock_outline),
+              label: 'Học tập',
+              tooltip: canLearn
+                  ? null
+                  : 'Đăng nhập trong Cài đặt để mở Học tập',
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.settings_outlined),
+              label: 'Cài đặt',
+            ),
+          ],
+        ),
       ),
     );
   }

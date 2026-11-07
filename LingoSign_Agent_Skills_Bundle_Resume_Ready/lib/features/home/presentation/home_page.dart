@@ -1,3 +1,8 @@
+import '../../../app/silent_moon_art.dart';
+import '../../../app/theme/app_theme.dart';
+import '../../../app/design_components.dart';
+import '../../../app/firebase_session.dart';
+
 import 'dart:async';
 
 import 'package:go_router/go_router.dart';
@@ -277,43 +282,32 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   Widget build(BuildContext context) {
     final preview = _active ? _gateway?.preview : null;
+    final canLearn = ref.watch(firebaseSessionProvider)?.user != null;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        OutlinedButton.icon(
-          onPressed: () => context.push('/practice'),
-          icon: const Icon(Icons.school_outlined),
-          label: const Text('Luyện tập và kiểm tra'),
+        const SectionHeading(
+          title: 'Nhận diện ký hiệu',
+          subtitle: 'Giữ bàn tay trong khung hình, ở nơi đủ sáng.',
+          icon: Icons.sign_language_outlined,
+          margin: EdgeInsets.zero,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: const [
             Chip(
               avatar: Icon(Icons.shield_outlined, size: 18),
-              backgroundColor: Color(0xFFD9F4E9),
-              labelStyle: TextStyle(color: Color(0xFF14533E)),
               label: Text('Xử lý trên thiết bị'),
             ),
             Chip(
               avatar: Icon(Icons.timer_outlined, size: 18),
-              backgroundColor: Color(0xFFFFE9C3),
-              labelStyle: TextStyle(color: Color(0xFF704507)),
               label: Text('Lấy mẫu 1 giây'),
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        Text(
-          'Nhận diện ký hiệu',
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Giữ toàn bộ bàn tay trong khung hình, đủ sáng và tránh che các ngón tay. Mỗi lượt lấy mẫu 1 giây; kết quả có độ tin cậy từ 60% được lưu cùng ảnh. Camera tiếp tục chạy cho đến khi bạn bấm dừng.',
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         if (_message != null) ...[
           Text(
             _message!,
@@ -335,24 +329,9 @@ class _HomePageState extends ConsumerState<HomePage>
             borderRadius: BorderRadius.circular(28),
             child: DecoratedBox(
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Color.alphaBlend(
-                      const Color(0xFF8B6EE8).withValues(alpha: .30),
-                      Theme.of(context).colorScheme.surface,
-                    ),
-                    Color.alphaBlend(
-                      const Color(0xFF20C6AB).withValues(alpha: .25),
-                      Theme.of(context).colorScheme.surface,
-                    ),
-                    Color.alphaBlend(
-                      const Color(0xFFFFBA42).withValues(alpha: .26),
-                      Theme.of(context).colorScheme.surface,
-                    ),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppTheme.midnight
+                    : AppAccents.tint(context, AppAccents.colors[0]),
               ),
               child:
                   preview ??
@@ -360,10 +339,9 @@ class _HomePageState extends ConsumerState<HomePage>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          Icons.sign_language_outlined,
-                          size: 72,
-                          color: Theme.of(context).colorScheme.primary,
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 24),
+                          child: SizedBox(height: 132, child: SilentMoonArt()),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -373,7 +351,7 @@ class _HomePageState extends ConsumerState<HomePage>
                         ),
                         const SizedBox(height: 8),
                         const Text(
-                          'Bấm bắt đầu và đưa tay vào khung hình',
+                          'Đưa tay vào khung hình',
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -406,12 +384,26 @@ class _HomePageState extends ConsumerState<HomePage>
           if (_recognitionStatus != null) Text(_recognitionStatus!),
           const SizedBox(height: 16),
         ],
+        Card(
+          color: AppAccents.tint(context, AppAccents.colors[1]),
+          child: ListTile(
+            leading: AccentIcon(
+              Icons.school_outlined,
+              accent: AppAccents.colors[1],
+            ),
+            title: Text(
+              canLearn ? 'Luyện tập và kiểm tra' : 'Đăng nhập để luyện tập',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () =>
+                canLearn ? context.push('/practice') : context.go('/settings'),
+          ),
+        ),
+        const SizedBox(height: 12),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           title: const Text('Tránh lưu ký hiệu trùng liên tiếp'),
-          subtitle: const Text(
-            'Áp dụng trong phiên camera này. Rút tay 1 giây hoặc đổi ký hiệu để lưu lại.',
-          ),
+          subtitle: const Text('Đổi ký hiệu hoặc rút tay 1 giây để lưu lại.'),
           value: _avoidDuplicates,
           onChanged: (value) => setState(() {
             _avoidDuplicates = value;

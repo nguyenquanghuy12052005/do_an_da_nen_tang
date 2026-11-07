@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/design_components.dart';
 import '../../../app/sync_providers.dart';
 import '../../../app/firebase_session.dart';
 
@@ -35,11 +36,13 @@ class _SyncSettingsState extends ConsumerState<SyncSettings> {
     if (!ref.watch(syncConfiguredProvider)) {
       if (firebase != null) {
         return const ListTile(
+          leading: Icon(Icons.cloud_off_outlined),
           title: Text("Đồng bộ tài khoản"),
           subtitle: Text("Đăng nhập để bật đồng bộ Firebase."),
         );
       }
       return const ListTile(
+        leading: Icon(Icons.cloud_off_outlined),
         title: Text('Đồng bộ lịch sử'),
         subtitle: Text('Chưa cấu hình máy chủ đồng bộ cho bản chạy này.'),
       );
@@ -49,13 +52,21 @@ class _SyncSettingsState extends ConsumerState<SyncSettings> {
     return Column(
       children: [
         SwitchListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 6,
+          ),
+          secondary: AccentIcon(
+            Icons.cloud_outlined,
+            accent: AppAccents.colors[4],
+          ),
           title: Text(
             firebase == null ? 'Đồng bộ lịch sử' : 'Đồng bộ lịch sử và tiến độ',
           ),
           subtitle: Text(
             firebase != null
-                ? 'Sao lưu lịch sử và bài luyện vào Firebase của tài khoản. Ảnh chỉ lưu trên thiết bị.'
-                : 'Gửi nhãn, thời gian và thao tác xóa đến máy chủ đã cấu hình. Ảnh chỉ lưu trên thiết bị. Các thiết bị dùng cùng mã kết nối sẽ chia sẻ lịch sử.',
+                ? 'Ảnh chỉ lưu trên thiết bị.'
+                : 'Các thiết bị cùng mã kết nối chia sẻ lịch sử.',
           ),
           value: _enabled ?? false,
           onChanged: _enabled == null || _busy
@@ -86,14 +97,19 @@ class _SyncSettingsState extends ConsumerState<SyncSettings> {
                   }
                 },
         ),
+        const Divider(height: 1, indent: 16, endIndent: 16),
         ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 6,
+          ),
           title: Text('Đang chờ đồng bộ: ${count ?? '…'}'),
           subtitle: Text(
             _error ??
                 result.asData?.value?.error ??
                 (result.hasError
                     ? 'Đồng bộ gặp lỗi, sẽ thử lại.'
-                    : 'Tự thử mỗi 5 giây khi app đang mở. Lỗi kết nối sẽ tăng thời gian chờ, tối đa 5 phút.'),
+                    : 'Tự đồng bộ khi có mạng.'),
           ),
           trailing: IconButton(
             tooltip: 'Đồng bộ ngay',

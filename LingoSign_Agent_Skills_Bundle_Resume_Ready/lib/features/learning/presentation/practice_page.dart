@@ -190,19 +190,12 @@ class _PracticePageState extends ConsumerState<PracticePage>
       children: [
         const SectionHeading(
           title: 'Luyện ký hiệu',
-          subtitle:
-              'Làm theo yêu cầu, nhận phản hồi và theo dõi kết quả của bạn.',
+          accent: Color(0xFF6159BC),
+          icon: Icons.flag_outlined,
+          subtitle: 'Thực hiện ký hiệu trên màn hình.',
         ),
         if (session == null) ...[
-          const Card(
-            child: Padding(
-              padding: EdgeInsets.all(20),
-              child: Text(
-                'Bài luyện đối chiếu nhãn model nhận diện với ký hiệu được yêu cầu. Chưa có hướng dẫn hình/video; độ tin cậy không phải độ chính xác làm bài.',
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _selectedTarget ?? '',
             decoration: const InputDecoration(

@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 /// Coordinated accents with readable ink and muted surfaces in either theme.
 abstract final class AppAccents {
   static const colors = [
-    Color(0xFF5146B8),
-    Color(0xFFB84B18),
-    Color(0xFFA52C6B),
-    Color(0xFF2860AD),
-    Color(0xFF087C70),
+    Color(0xFF6159BC),
+    Color(0xFF9A541C),
+    Color(0xFF934D6C),
+    Color(0xFF49619C),
+    Color(0xFF287364),
   ];
   static Color tint(BuildContext context, Color color) => Color.alphaBlend(
     color.withValues(
-      alpha: Theme.of(context).brightness == Brightness.dark ? .22 : .10,
+      alpha: Theme.of(context).brightness == Brightness.dark ? .25 : .16,
     ),
     Theme.of(context).colorScheme.surface,
   );
@@ -22,53 +22,89 @@ class SectionHeading extends StatelessWidget {
     super.key,
     required this.title,
     required this.subtitle,
-    this.accent = const Color(0xFF5146B8),
+    this.accent = const Color(0xFF6159BC),
+    this.icon = Icons.auto_awesome_outlined,
+    this.margin = const EdgeInsets.fromLTRB(20, 16, 20, 4),
   });
   final String title;
   final String subtitle;
   final Color accent;
+  final EdgeInsetsGeometry margin;
+  final IconData icon;
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
     return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-      padding: const EdgeInsets.all(24),
+      margin: margin,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [accent, Color.lerp(accent, const Color(0xFF21284F), .35)!],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: accent.withValues(alpha: .18),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        color: AppAccents.tint(context, accent),
         borderRadius: BorderRadius.circular(28),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.all(20),
+      child: Row(
         children: [
-          Container(
-            width: 36,
-            height: 5,
-            margin: const EdgeInsets.only(bottom: 18),
-            decoration: BoxDecoration(
-              color: scheme.secondaryContainer,
-              borderRadius: BorderRadius.circular(4),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Semantics(
+                  header: true,
+                  child: Text(title, style: theme.textTheme.headlineSmall),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  subtitle,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ),
           ),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.headlineSmall
-                ?.copyWith(color: Colors.white),
-          ),
-          const SizedBox(height: 8),
-          Text(subtitle, style: TextStyle(color: Colors.white, height: 1.5)),
+          const SizedBox(width: 12),
+          AccentIcon(icon, accent: accent),
         ],
+      ),
+    );
+  }
+}
+
+class PanelHeading extends StatelessWidget {
+  const PanelHeading(this.label, {super.key});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(4, 0, 4, 10),
+    child: Semantics(
+      header: true,
+      child: Text(label, style: Theme.of(context).textTheme.titleMedium),
+    ),
+  );
+}
+
+class AccentIcon extends StatelessWidget {
+  const AccentIcon(this.icon, {super.key, required this.accent});
+  final IconData icon;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppAccents.tint(context, accent),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(9),
+        child: Icon(
+          icon,
+          size: 20,
+          color: theme.brightness == Brightness.dark
+              ? theme.colorScheme.onSurface
+              : accent,
+        ),
       ),
     );
   }

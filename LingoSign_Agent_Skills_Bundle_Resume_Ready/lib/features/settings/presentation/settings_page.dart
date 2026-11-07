@@ -5,33 +5,51 @@ import 'package:lingosign_ai/app/theme/theme_mode_controller.dart';
 import '../../sync/presentation/sync_settings.dart';
 import '../../account/presentation/account_settings.dart';
 import '../../../app/design_components.dart';
+import '../../../app/firebase_session.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final hasFirebase = ref.watch(firebaseSessionProvider) != null;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
       children: [
         const SectionHeading(
           title: 'Theo cách của bạn',
-          subtitle: 'Tùy chỉnh giao diện và quản lý đồng bộ lịch sử.',
+          accent: Color(0xFF49619C),
+          icon: Icons.tune_rounded,
+          subtitle: 'Tài khoản, đồng bộ và giao diện',
+          margin: EdgeInsets.zero,
         ),
-        const AccountSettings(),
+        const SizedBox(height: 24),
+        if (hasFirebase) ...[
+          const PanelHeading('Tài khoản'),
+          const AccountSettings(),
+          const SizedBox(height: 24),
+        ],
+        const PanelHeading('Đồng bộ'),
         const Card(
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 8),
             child: SyncSettings(),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
+        const PanelHeading('Giao diện'),
         Card(
           child: SwitchListTile(
-            secondary: const Icon(Icons.dark_mode_outlined),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
+            secondary: AccentIcon(
+              Icons.dark_mode_outlined,
+              accent: AppAccents.colors[0],
+            ),
             title: const Text('Chế độ tối'),
-            subtitle: const Text('Chỉ áp dụng trong phiên sử dụng này'),
             value: isDark,
             onChanged: ref.read(themeModeProvider.notifier).setDarkMode,
           ),

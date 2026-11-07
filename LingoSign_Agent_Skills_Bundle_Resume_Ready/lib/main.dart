@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lingosign_ai/app/app.dart';
 import 'package:lingosign_ai/app/camera_gateway.dart';
@@ -53,11 +52,9 @@ Future<void> main() async {
       ),
     );
   } catch (error) {
-    debugPrint(
-      'LingoSign startup: ' + phase + ' ' + error.runtimeType.toString(),
-    );
-    if (error is FirebaseException) debugPrint('Firebase code: ' + error.code);
-    if (error is PlatformException) debugPrint('Platform code: ' + error.code);
+    debugPrint('LingoSign startup: $phase ${error.runtimeType}');
+    if (error is FirebaseException) debugPrint('Firebase code: ${error.code}');
+    if (error is PlatformException) debugPrint('Platform code: ${error.code}');
     runApp(
       const MaterialApp(
         home: Scaffold(

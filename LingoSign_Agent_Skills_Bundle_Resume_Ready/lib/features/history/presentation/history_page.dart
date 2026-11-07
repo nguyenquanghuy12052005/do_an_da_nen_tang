@@ -49,7 +49,9 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
             children: [
               const SectionHeading(
                 title: 'Những ký hiệu đã lưu',
-                subtitle: 'Xem lại từng khoảnh khắc. Chạm vào ảnh để phóng to.',
+                subtitle: 'Chạm ảnh để phóng to.',
+                icon: Icons.history_rounded,
+                accent: Color(0xFF934D6C),
               ),
               const Text('Không tải được lịch sử.'),
               TextButton(
@@ -184,9 +186,15 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(14),
                                 child: record.imagePath == null
-                                    ? const Icon(
-                                        Icons.image_not_supported_outlined,
-                                        semanticLabel: 'Chưa có ảnh',
+                                    ? ColoredBox(
+                                        color: AppAccents.tint(
+                                          context,
+                                          AppAccents.colors[2],
+                                        ),
+                                        child: const Icon(
+                                          Icons.sign_language_outlined,
+                                          semanticLabel: 'Chưa có ảnh',
+                                        ),
                                       )
                                     : InkWell(
                                         onTap: () async {
@@ -219,7 +227,10 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                                       ),
                               ),
                             ),
-                            title: Text(record.label),
+                            title: Text(
+                              record.label,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
                             subtitle: Text(
                               record.confirmedAt
                                   .toLocal()

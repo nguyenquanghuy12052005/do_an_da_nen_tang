@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lingosign_ai/app/app.dart';
+import 'package:lingosign_ai/app/router.dart';
 import 'package:lingosign_ai/app/camera_gateway.dart';
 import 'package:lingosign_ai/features/recognition/domain/entities/recognition_prediction.dart';
 import 'package:lingosign_ai/app/local_data_providers.dart';
@@ -277,7 +278,7 @@ void main() {
       ),
     );
 
-    expect(find.textContaining('Mỗi lượt lấy mẫu 1 giây'), findsOneWidget);
+    expect(find.text('Lấy mẫu 1 giây'), findsOneWidget);
     await tester.tap(find.text('Từ điển').last);
     await tester.pumpAndSettle();
     expect(
@@ -288,6 +289,34 @@ void main() {
     await tester.tap(find.text('Lịch sử').last);
     await tester.pumpAndSettle();
     expect(find.textContaining('Chưa có kết quả.'), findsOneWidget);
+  });
+
+  testWidgets('guest learning is locked and settings is the fifth tab', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const ProviderScope(child: LingoSignApp()));
+    final bar = tester.widget<NavigationBar>(find.byType(NavigationBar));
+    final learning = bar.destinations[3] as NavigationDestination;
+    expect(learning.label, 'Học tập');
+    expect(learning.enabled, isFalse);
+    expect((bar.destinations[4] as NavigationDestination).label, 'Cài đặt');
+    await tester.tap(find.text('Học tập'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+      0,
+    );
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(LingoSignApp)),
+    );
+    container.read(appRouterProvider).go('/practice?target=A');
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+      4,
+    );
+    expect(find.textContaining('Theo cách của bạn'), findsOneWidget);
   });
 
   testWidgets('switches Material theme to dark mode', (tester) async {
