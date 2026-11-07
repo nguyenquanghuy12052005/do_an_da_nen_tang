@@ -11,10 +11,15 @@ import '../app_database.dart';
 import '../sync_outbox.dart';
 
 class LocalSyncRepository implements SyncRepository {
-  LocalSyncRepository(this.db, this.remote, {DateTime Function()? now})
-    : now = now ?? DateTime.now;
+  LocalSyncRepository(
+    this.db,
+    this.remote, {
+    DateTime Function()? now,
+    this.syncLearning = false,
+  }) : now = now ?? DateTime.now;
   final AppDatabase db;
   final SyncRemote remote;
+  final bool syncLearning;
   final DateTime Function() now;
   Future<SyncResult>? _running;
 
@@ -27,12 +32,7 @@ class LocalSyncRepository implements SyncRepository {
   }
 
   @override
-  Future<bool> isEnabled() async =>
-      (await (db.select(
-            db.appSettings,
-          )..where((t) => t.key.equals('sync_enabled'))).getSingleOrNull())
-          ?.valueJson ==
-      'true';
+  Future<bool> isEnabled() => isLocalSyncEnabled(db);
 
   @override
   Future<void> setEnabled(bool value) => db.transaction(() async {
@@ -46,6 +46,14 @@ class LocalSyncRepository implements SyncRepository {
           ),
         );
     if (value) {
+      if (syncLearning) {
+        for (final row in await db.select(db.learningSessions).get()) {
+          await enqueueLearning(
+            db,
+            (jsonDecode(row.payloadJson) as Map).cast<String, Object?>(),
+          );
+        }
+      }
       for (final row in await db.select(db.recognitionHistoryRows).get()) {
         await enqueueHistory(
           db,
@@ -125,6 +133,11 @@ class LocalSyncRepository implements SyncRepository {
             await db.transaction(() async {
               for (final record in page.records) {
                 final id = record['id'] as String;
+                if (record['learning'] case final Map snapshot
+                    when syncLearning) {
+                  await _mergeLearning(id, snapshot);
+                  continue;
+                }
                 final local = await (db.select(
                   db.recognitionHistoryRows,
                 )..where((t) => t.id.equals(id))).getSingleOrNull();
@@ -174,5 +187,26 @@ class LocalSyncRepository implements SyncRepository {
       pendingCount: await watchPendingCount().first,
       error: error,
     );
+  }
+
+  Future<void> _mergeLearning(String id, Map snapshot) async {
+    final current = await (db.select(
+      db.learningSessions,
+    )..where((row) => row.id.equals(id))).getSingleOrNull();
+    final count = (snapshot['answers'] as List).length;
+    if (current != null &&
+        ((jsonDecode(current.payloadJson) as Map)['answers'] as List).length >=
+            count) {
+      return;
+    }
+    await db
+        .into(db.learningSessions)
+        .insertOnConflictUpdate(
+          LearningSessionsCompanion.insert(
+            id: id,
+            payloadJson: jsonEncode(snapshot),
+            startedAtUtcMs: snapshot['startedAt'] as int,
+          ),
+        );
   }
 }

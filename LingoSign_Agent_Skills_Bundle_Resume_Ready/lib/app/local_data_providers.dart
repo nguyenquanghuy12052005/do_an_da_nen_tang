@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'firebase_session.dart';
+
 import 'package:flutter/services.dart';
 
 import '../features/learning/domain/practice_session.dart';
@@ -17,12 +19,17 @@ import '../features/history/domain/entities/recognition_record.dart';
 import '../features/history/domain/repositories/recognition_history_repository.dart';
 
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
-  final database = AppDatabase.open();
+  final user = ref.watch(firebaseSessionProvider)?.user;
+  final key = user == null ? null : base64Url.encode(utf8.encode(user.uid));
+  final database = AppDatabase.open(accountKey: key);
   ref.onDispose(() => unawaited(database.close()));
   return database;
 });
 final learningRepositoryProvider = Provider<LearningRepository>(
-  (ref) => LocalLearningRepository(ref.watch(appDatabaseProvider)),
+  (ref) => LocalLearningRepository(
+    ref.watch(appDatabaseProvider),
+    syncLearning: ref.watch(firebaseSessionProvider)?.user != null,
+  ),
 );
 final learningSessionsProvider =
     StreamProvider.autoDispose<List<PracticeSession>>(

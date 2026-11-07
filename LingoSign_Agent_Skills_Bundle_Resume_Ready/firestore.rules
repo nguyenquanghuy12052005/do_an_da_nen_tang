@@ -1,0 +1,24 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid}/syncEvents/{eventId} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == uid;
+      }
+      allow read: if isOwner();
+      allow create: if isOwner()
+        && request.resource.data.keys().hasOnly([
+          'payload', 'committedAt', 'type', 'summary', 'occurredAt', 'details'
+        ])
+        && (!request.resource.data.keys().hasAny(['type', 'summary', 'occurredAt', 'details'])
+          || (request.resource.data.type in ['Bài luyện', 'Nhận diện', 'Xóa lịch sử']
+            && request.resource.data.summary is string
+            && request.resource.data.summary.size() <= 256
+            && request.resource.data.occurredAt is timestamp
+            && request.resource.data.details is map))
+        && request.resource.data.payload is string
+        && request.resource.data.payload.size() <= 32768
+        && request.resource.data.committedAt == request.time;
+    }
+  }
+}

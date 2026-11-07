@@ -120,7 +120,11 @@ class HistoryReviews extends Table {
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
-  factory AppDatabase.open() => AppDatabase(driftDatabase(name: 'lingosign'));
+  factory AppDatabase.open({String? accountKey}) => AppDatabase(
+    driftDatabase(
+      name: accountKey == null ? 'lingosign' : 'lingosign_account_$accountKey',
+    ),
+  );
 
   @override
   int get schemaVersion => 7;

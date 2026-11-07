@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/sync_providers.dart';
+import '../../../app/firebase_session.dart';
 
 class SyncSettings extends ConsumerStatefulWidget {
   const SyncSettings({super.key});
@@ -30,7 +31,14 @@ class _SyncSettingsState extends ConsumerState<SyncSettings> {
 
   @override
   Widget build(BuildContext context) {
+    final firebase = ref.watch(firebaseSessionProvider);
     if (!ref.watch(syncConfiguredProvider)) {
+      if (firebase != null) {
+        return const ListTile(
+          title: Text("Đồng bộ tài khoản"),
+          subtitle: Text("Đăng nhập để bật đồng bộ Firebase."),
+        );
+      }
       return const ListTile(
         title: Text('Đồng bộ lịch sử'),
         subtitle: Text('Chưa cấu hình máy chủ đồng bộ cho bản chạy này.'),
@@ -41,9 +49,13 @@ class _SyncSettingsState extends ConsumerState<SyncSettings> {
     return Column(
       children: [
         SwitchListTile(
-          title: const Text('Đồng bộ lịch sử'),
-          subtitle: const Text(
-            'Gửi nhãn, thời gian và thao tác xóa đến máy chủ đã cấu hình. Ảnh chỉ lưu trên thiết bị. Các thiết bị dùng cùng mã kết nối sẽ chia sẻ lịch sử.',
+          title: Text(
+            firebase == null ? 'Đồng bộ lịch sử' : 'Đồng bộ lịch sử và tiến độ',
+          ),
+          subtitle: Text(
+            firebase != null
+                ? 'Sao lưu lịch sử và bài luyện vào Firebase của tài khoản. Ảnh chỉ lưu trên thiết bị.'
+                : 'Gửi nhãn, thời gian và thao tác xóa đến máy chủ đã cấu hình. Ảnh chỉ lưu trên thiết bị. Các thiết bị dùng cùng mã kết nối sẽ chia sẻ lịch sử.',
           ),
           value: _enabled ?? false,
           onChanged: _enabled == null || _busy

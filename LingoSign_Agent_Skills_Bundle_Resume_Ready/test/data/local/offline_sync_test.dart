@@ -9,6 +9,9 @@ import 'package:lingosign_ai/data/local/repositories/local_sync_repository.dart'
 
 import '../../fixtures/recognition_record_fixture.dart';
 
+import 'package:lingosign_ai/data/local/repositories/local_learning_repository.dart';
+import 'package:lingosign_ai/features/learning/domain/practice_session.dart';
+
 import 'package:lingosign_ai/features/sync/domain/entities/sync_operation.dart';
 import 'package:lingosign_ai/features/sync/domain/repositories/sync_remote.dart';
 
@@ -63,6 +66,57 @@ void main() {
     await db.close();
     await directory.delete(recursive: true);
   });
+
+  test(
+    'account learning stays local offline and restores after sync',
+    () async {
+      final otherDevice = AppDatabase(NativeDatabase.memory());
+      final differentAccount = AppDatabase(NativeDatabase.memory());
+      addTearDown(otherDevice.close);
+      addTearDown(differentAccount.close);
+      final learning = LocalLearningRepository(db, syncLearning: true);
+      final accountSync = LocalSyncRepository(
+        db,
+        remote,
+        now: () => now,
+        syncLearning: true,
+      );
+      final session = PracticeSession(
+        id: 'practice-test',
+        startedAt: now,
+        targets: ['A', 'B'],
+        answers: [PracticeAnswer(target: 'A', at: now)],
+      );
+      await learning.save(session);
+      expect(await accountSync.watchPendingCount().first, 0);
+      await accountSync.setEnabled(true);
+      remote.online = false;
+      expect((await accountSync.synchronize()).pendingCount, 1);
+      session.skip(now);
+      await learning.save(session);
+      expect((await learning.watchSessions().first).single.complete, isTrue);
+      expect(
+        await LocalLearningRepository(differentAccount).watchSessions().first,
+        isEmpty,
+      );
+
+      remote.online = true;
+      now = now.add(const Duration(seconds: 3));
+      expect((await accountSync.synchronize()).pendingCount, 0);
+      final restore = LocalSyncRepository(
+        otherDevice,
+        remote,
+        syncLearning: true,
+      );
+      await restore.setEnabled(true);
+      expect((await restore.synchronize()).error, isNull);
+      final restored = (await LocalLearningRepository(
+        otherDevice,
+      ).watchSessions().first).single;
+      expect(restored.complete, isTrue);
+      expect(restored.answers.length, 2);
+    },
+  );
 
   test('disabled by default; history and durable queue survive restart; backoff retries after reconnect', () async {
     await history.saveConfirmed(record('offline'));

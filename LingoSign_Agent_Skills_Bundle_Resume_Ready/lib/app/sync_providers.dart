@@ -7,17 +7,27 @@ import '../features/sync/data/http_sync_remote.dart';
 import '../features/sync/domain/repositories/sync_repository.dart';
 import '../features/sync/domain/entities/sync_result.dart';
 import 'local_data_providers.dart';
+import 'firebase_session.dart';
+import '../features/sync/data/firestore_sync_remote.dart';
 
 const syncUrl = String.fromEnvironment('SYNC_URL');
 const syncToken = String.fromEnvironment('SYNC_TOKEN');
 const syncConfigured = syncUrl != '' && syncToken != '';
-final syncConfiguredProvider = Provider<bool>((ref) => syncConfigured);
-final syncRepositoryProvider = Provider<SyncRepository>(
-  (ref) => LocalSyncRepository(
+final syncConfiguredProvider = Provider<bool>((ref) {
+  final session = ref.watch(firebaseSessionProvider);
+  return session == null ? syncConfigured : session.user != null;
+});
+final syncRepositoryProvider = Provider<SyncRepository>((ref) {
+  final session = ref.watch(firebaseSessionProvider);
+  final uid = session?.user?.uid;
+  return LocalSyncRepository(
     ref.watch(appDatabaseProvider),
-    HttpSyncRemote(baseUrl: syncUrl, token: syncToken),
-  ),
-);
+    uid == null
+        ? HttpSyncRemote(baseUrl: syncUrl, token: syncToken)
+        : FirestoreSyncRemote(session!.firestore, uid),
+    syncLearning: uid != null,
+  );
+});
 final pendingSyncCountProvider = StreamProvider<int>(
   (ref) => ref.watch(syncRepositoryProvider).watchPendingCount(),
 );

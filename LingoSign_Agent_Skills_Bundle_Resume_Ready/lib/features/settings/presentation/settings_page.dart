@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lingosign_ai/app/theme/theme_mode_controller.dart';
 
 import '../../sync/presentation/sync_settings.dart';
+import '../../account/presentation/account_settings.dart';
 import '../../../app/design_components.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -18,6 +19,7 @@ class SettingsPage extends ConsumerWidget {
           title: 'Theo cách của bạn',
           subtitle: 'Tùy chỉnh giao diện và quản lý đồng bộ lịch sử.',
         ),
+        const AccountSettings(),
         const Card(
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 8),
