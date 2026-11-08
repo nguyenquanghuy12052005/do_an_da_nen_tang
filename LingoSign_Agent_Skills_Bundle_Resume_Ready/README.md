@@ -14,6 +14,21 @@ The received model artifacts and remaining contract questions are in
 
 ## Development
 
+### Build a Firebase APK for a phone
+
+From the Git repository root in PowerShell, run `./build-apk.ps1`.
+The script validates `.sync-demo/firebase-defines.json` and bundles that Firebase
+configuration into a universal debug APK supporting ARM32, ARM64 and x64.
+Output is `build/app/outputs/flutter-apk/app-debug.apk` inside this Flutter project.
+Copy the APK to an Android 7.0+ phone and open it to install.
+
+After changing code, run the same command and install the new APK over the
+existing app. Installed APKs do not update automatically. Keep the same package
+ID and debug signing key (normally `%USERPROFILE%/.android/debug.keystore`) so
+Android accepts the update and retains app data. Uninstalling removes local app
+data. This command produces a testing build; production release signing uses
+the separate release configuration described below.
+
 Learning features: the **Học tập** tab now offers model-label camera practice
 (quick, 5 or 10 questions), persisted answers, daily progress and retry targets.
 History supports SQL filters, favorites, confidence and separate correction notes.
