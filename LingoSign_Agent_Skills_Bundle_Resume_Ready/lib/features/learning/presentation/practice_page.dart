@@ -13,8 +13,9 @@ import '../domain/practice_session.dart';
 import 'practice_mascot.dart';
 
 class PracticePage extends ConsumerStatefulWidget {
-  const PracticePage({super.key, this.target});
+  const PracticePage({super.key, this.target, this.lessonId});
   final String? target;
+  final String? lessonId;
   @override
   ConsumerState<PracticePage> createState() => _PracticePageState();
 }
@@ -70,6 +71,10 @@ class _PracticePageState extends ConsumerState<PracticePage>
       )).toList()..shuffle(Random.secure());
       if (_selectedTarget != null && !labels.contains(_selectedTarget)) {
         throw StateError('Unsupported target');
+      }
+      if (review != null &&
+          (review.isEmpty || !review.every(labels.contains))) {
+        throw StateError('Unsupported practice sequence');
       }
       final now = DateTime.now();
       final session = PracticeSession(
@@ -214,6 +219,13 @@ class _PracticePageState extends ConsumerState<PracticePage>
         ref.watch(supportedPracticeLabelsProvider).asData?.value.toList() ??
         <String>[];
     labels.sort();
+    final lessons = widget.lessonId == null
+        ? null
+        : ref.watch(publishedLessonsProvider);
+    final lesson = lessons?.value
+        ?.where((item) => item['id'] == widget.lessonId)
+        .firstOrNull;
+    final lessonTargets = (lesson?['targets'] as List?)?.cast<String>();
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
@@ -223,7 +235,30 @@ class _PracticePageState extends ConsumerState<PracticePage>
           icon: Icons.flag_outlined,
           subtitle: 'Thực hiện ký hiệu trên màn hình.',
         ),
-        if (session == null) ...[
+        if (session == null && widget.lessonId != null) ...[
+          if (lessons?.isLoading == true)
+            const LinearProgressIndicator()
+          else if (lessonTargets == null)
+            const EmptyPanel(
+              icon: Icons.school_outlined,
+              message: 'Bộ bài hiện không khả dụng.',
+            )
+          else ...[
+            Text(
+              lesson!['label'] as String,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            if ((lesson['description'] as String?)?.isNotEmpty == true)
+              Text(lesson['description'] as String),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: _busy
+                  ? null
+                  : () => _start(lessonTargets.length, review: lessonTargets),
+              child: Text('Bắt đầu ${lessonTargets.length} câu'),
+            ),
+          ],
+        ] else if (session == null) ...[
           const PracticeMascotCard(
             mood: MascotMood.welcome,
             title: 'Cùng luyện với mình nhé!',

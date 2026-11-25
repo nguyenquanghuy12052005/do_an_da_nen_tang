@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/design_components.dart';
 import '../../../app/firebase_session.dart';
 import 'auth_page.dart';
+import 'account_presence.dart';
 
 class AccountSettings extends ConsumerWidget {
   const AccountSettings({super.key});
@@ -38,6 +39,7 @@ class AccountSettings extends ConsumerWidget {
                       )
                     : () async {
                         try {
+                          await AccountPresence.markOffline(context);
                           await session.auth.signOut();
                         } catch (_) {
                           if (context.mounted) {

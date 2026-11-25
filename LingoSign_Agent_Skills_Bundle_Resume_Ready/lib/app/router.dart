@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 
 import '../features/learning/presentation/practice_page.dart';
 import '../features/learning/presentation/learning_page.dart';
+import '../features/admin/data/admin_providers.dart';
+import '../features/admin/presentation/admin_page.dart';
 
 import 'package:go_router/go_router.dart';
 import 'package:lingosign_ai/app/shell.dart';
@@ -14,7 +16,10 @@ import 'package:lingosign_ai/features/history/presentation/history_page.dart';
 import 'package:lingosign_ai/features/settings/presentation/settings_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final canLearn = ref.watch(firebaseSessionProvider)?.user != null;
+  final locked = ref.watch(
+    accountAccessProvider.select((access) => access.value?.locked ?? false),
+  );
+  final canLearn = ref.watch(firebaseSessionProvider)?.user != null && !locked;
   final router = GoRouter(
     initialLocation: '/',
     redirect: (context, state) {
@@ -24,12 +29,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           : null;
     },
     routes: [
+      GoRoute(path: '/admin', builder: (context, state) => const AdminPage()),
       GoRoute(
         path: '/practice',
         builder: (context, state) => Scaffold(
           appBar: AppBar(title: const Text('Luyện tập')),
           body: SafeArea(
-            child: PracticePage(target: state.uri.queryParameters['target']),
+            child: PracticePage(
+              target: state.uri.queryParameters['target'],
+              lessonId: state.uri.queryParameters['lesson'],
+            ),
           ),
         ),
       ),

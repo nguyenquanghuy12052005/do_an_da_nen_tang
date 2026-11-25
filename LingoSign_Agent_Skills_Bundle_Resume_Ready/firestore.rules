@@ -1,24 +1,130 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{uid}/syncEvents/{eventId} {
-      function isOwner() {
-        return request.auth != null && request.auth.uid == uid;
+    function signedIn() { return request.auth != null; }
+    function access() {
+      return get(/databases/$(database)/documents/accountAccess/$(request.auth.uid)).data;
+    }
+    function admin() {
+      return signedIn() && access().role == 'admin' && access().locked == false;
+    }
+    function staff() {
+      return signedIn() && access().role in ['admin', 'manager'] && access().locked == false;
+    }
+    function active() {
+      return signedIn() && (!exists(/databases/$(database)/documents/accountAccess/$(request.auth.uid))
+        || access().locked == false);
+    }
+    function validPolicy() {
+      return request.resource.data.keys().hasOnly(['role', 'locked'])
+        && request.resource.data.role in ['learner', 'manager', 'admin']
+        && request.resource.data.locked is bool
+        && (request.resource.data.role != 'admin' || !request.resource.data.locked);
+    }
+    match /accountAccess/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || admin());
+      allow list: if admin();
+      allow create: if admin() && uid != request.auth.uid && validPolicy();
+      allow update: if admin() && uid != request.auth.uid && resource.data.role != 'admin' && validPolicy();
+    }
+    match /users/{uid} {
+      allow read: if admin() || (signedIn() && request.auth.uid == uid);
+      function validProfile() {
+        return request.resource.data.keys().hasOnly(['email', 'label', 'hidden', 'deleted', 'deletedAt', 'authDisabled'])
+        && request.resource.data.email is string && request.resource.data.email.size() <= 254
+        && request.resource.data.label is string && request.resource.data.label.size() <= 100
+        && request.resource.data.get('hidden', false) is bool
+        && request.resource.data.get('deleted', false) is bool;
       }
-      allow read: if isOwner();
-      allow create: if isOwner()
-        && request.resource.data.keys().hasOnly([
-          'payload', 'committedAt', 'type', 'summary', 'occurredAt', 'details'
-        ])
-        && (!request.resource.data.keys().hasAny(['type', 'summary', 'occurredAt', 'details'])
-          || (request.resource.data.type in ['Bài luyện', 'Nhận diện', 'Xóa lịch sử']
-            && request.resource.data.summary is string
-            && request.resource.data.summary.size() <= 256
-            && request.resource.data.occurredAt is timestamp
-            && request.resource.data.details is map))
-        && request.resource.data.payload is string
-        && request.resource.data.payload.size() <= 32768
-        && request.resource.data.committedAt == request.time;
+      function ownerProfile() {
+        return signedIn() && request.auth.uid == uid
+          && request.resource.data.email == request.auth.token.email;
+      }
+      function managedUser() {
+        let policy = /databases/$(database)/documents/accountAccess/$(uid);
+        return uid != request.auth.uid && (!exists(policy) || get(policy).data.role != 'admin');
+      }
+      allow create: if validProfile() && (admin() ||
+        (ownerProfile() && request.resource.data.keys().hasOnly(['email','label'])));
+      allow update: if validProfile() && (
+        (admin() && (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['email','label'])
+          || managedUser()))
+        || (ownerProfile() && resource.data.get('deleted', false) == false
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['email','label']))
+      );
+      match /syncEvents/{eventId} {
+        allow read: if admin() || (active() && request.auth.uid == uid);
+        allow create: if active() && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['payload', 'committedAt', 'type', 'summary', 'occurredAt', 'details'])
+          && request.resource.data.payload is string
+          && request.resource.data.payload.size() <= 32768
+          && request.resource.data.committedAt == request.time;
+        allow update, delete: if admin();
+      }
+    }
+    function validContent(kind) {
+      let d = request.resource.data;
+      return d.label is string && d.label.size() > 0 && d.label.size() <= 100
+        && d.state in ['draft', 'published', 'hidden']
+        && d.revision is int && d.revision > 0
+        && (d.state == 'hidden' || kind != 'signs' || (
+          d.signSystem is string && d.signSystem.size() > 0 && d.signSystem.size() <= 60
+          && d.instructions is string && d.instructions.size() <= 2000
+          && d.description is string && d.description.size() <= 1000
+          && d.category is string && d.category.size() <= 100
+          && d.categoryId is string && d.categoryId.size() <= 64
+          && d.licenseName is string && d.licenseName.size() > 0 && d.licenseName.size() <= 150
+          && d.sourceUrl is string && d.sourceUrl.matches('https://.*') && d.sourceUrl.size() <= 400
+          && d.modelLabel is string && d.modelLabel.matches('^([A-Z])?$')
+          && d.imageAsset is string && d.videoAsset is string
+          && (d.imageAsset == '' || d.imageAsset.matches('^assets/dictionary/[A-Za-z0-9_./-]+$'))
+          && (d.videoAsset == '' || d.videoAsset.matches('^assets/dictionary/[A-Za-z0-9_./-]+$'))
+          && !d.imageAsset.matches('.*[.][.].*') && !d.videoAsset.matches('.*[.][.].*')
+        ))
+        && (kind != 'lessons' || (d.targets is list && d.targets.size() > 0
+          && d.targets.size() <= 30
+          && d.targets.toSet().hasOnly(['A','B','C','D','E','F','G','H','I','J','K','L','M',
+            'N','O','P','Q','R','S','T','U','V','W','X','Y','Z'])));
+    }
+    match /{collection}/{id} {
+      allow read: if collection in ['published_signs','published_categories','published_lessons']
+        || (staff() && collection in ['admin_signs','admin_categories','admin_lessons']);
+      allow create: if collection in ['admin_signs','admin_categories','admin_lessons']
+        && staff() && validContent(collection.replace('admin_', ''))
+        && request.resource.data.revision == 1
+        && (admin() || request.resource.data.state == 'draft');
+      allow update: if collection in ['admin_signs','admin_categories','admin_lessons']
+        && staff() && validContent(collection.replace('admin_', ''))
+        && request.resource.data.revision == resource.data.revision + 1
+        && (admin() || request.resource.data.state == 'draft');
+      allow delete: if admin() && collection in ['admin_signs','admin_categories','admin_lessons'];
+      allow write: if admin() && collection in ['published_signs','published_categories','published_lessons']
+        && (request.resource.data == {'state': 'hidden'}
+          || (validContent(collection.replace('published_', ''))
+            && request.resource.data.state == 'published'
+            && request.resource.data == getAfter(/databases/$(database)/documents/$('admin_' + collection.replace('published_', ''))/$(id)).data));
+    }
+    match /userPresence/{sessionId} {
+      allow read: if admin();
+      allow create: if active()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uid', 'online', 'lastSeen'])
+        && request.resource.data.online is bool
+        && request.resource.data.lastSeen == request.time;
+      allow update: if active() && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uid', 'online', 'lastSeen'])
+        && request.resource.data.online is bool
+        && request.resource.data.lastSeen == request.time;
+    }
+    match /adminAudit/{id} {
+      allow read: if admin();
+      allow create: if staff()
+        && request.resource.data.actor == request.auth.uid
+        && request.resource.data.at == request.time
+        && request.resource.data.keys().hasOnly(['actor','action','kind','target','label','at'])
+        && request.resource.data.action in ['save','publish','hide','delete','account',
+          'profileSave','profileDelete','profileVisibility'];
     }
   }
 }

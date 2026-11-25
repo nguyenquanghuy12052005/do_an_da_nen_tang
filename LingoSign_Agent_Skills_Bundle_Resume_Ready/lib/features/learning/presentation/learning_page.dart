@@ -36,6 +36,7 @@ class _LearningPageState extends ConsumerState<LearningPage> {
             )),
           );
           final visibleSessions = sessionPage.value ?? const [];
+          final lessons = ref.watch(publishedLessonsProvider).value ?? const [];
           final days = progress.days.keys.toList()..sort();
           final mistakes = progress.mistakes.entries.toList()
             ..sort((a, b) => b.value.compareTo(a.value));
@@ -55,6 +56,27 @@ class _LearningPageState extends ConsumerState<LearningPage> {
                 icon: const Icon(Icons.school_outlined),
                 label: const Text('Bắt đầu bài luyện'),
               ),
+              if (lessons.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const PanelHeading('Bộ bài luyện tập'),
+                for (final lesson in lessons)
+                  Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.school_outlined),
+                      title: Text(lesson['label'] as String),
+                      subtitle: Text(
+                        '${(lesson['targets'] as List).length} câu',
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.push(
+                        Uri(
+                          path: '/practice',
+                          queryParameters: {'lesson': lesson['id'] as String},
+                        ).toString(),
+                      ),
+                    ),
+                  ),
+              ],
               const SizedBox(height: 24),
               const PanelHeading('Tổng quan'),
               _ProgressMetrics(progress: progress),

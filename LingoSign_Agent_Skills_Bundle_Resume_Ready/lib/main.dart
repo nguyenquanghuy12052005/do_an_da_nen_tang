@@ -10,6 +10,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:lingosign_ai/app/theme/theme_mode_controller.dart';
 import 'package:lingosign_ai/features/recognition/data/camera/camera_plugin_gateway.dart';
 
+import 'features/account/presentation/account_presence.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   var phase = 'Firebase Core';
@@ -46,9 +48,11 @@ Future<void> main() async {
               home: Scaffold(body: Center(child: CircularProgressIndicator())),
             );
           }
-          return _SessionApp(
+          final session = FirebaseSession(auth, firestore, snapshot.data);
+          return AccountPresence(
             key: ValueKey(snapshot.data?.uid),
-            session: FirebaseSession(auth, firestore, snapshot.data),
+            session: session,
+            child: _SessionApp(session: session),
           );
         },
       ),
@@ -70,7 +74,7 @@ Future<void> main() async {
 }
 
 class _SessionApp extends StatefulWidget {
-  const _SessionApp({super.key, this.session});
+  const _SessionApp({this.session});
   final FirebaseSession? session;
 
   @override

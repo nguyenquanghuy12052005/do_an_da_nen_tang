@@ -5,6 +5,9 @@ import 'firebase_session.dart';
 
 import 'package:flutter/services.dart';
 
+import '../features/admin/data/admin_providers.dart';
+import '../features/admin/data/published_content.dart';
+
 import '../features/learning/domain/practice_session.dart';
 import '../features/learning/domain/learning_progress.dart';
 import '../data/local/repositories/local_learning_repository.dart';
@@ -72,6 +75,37 @@ final filteredHistoryPageProvider = StreamProvider.autoDispose
 final dictionaryRepositoryProvider = Provider<SignDictionaryRepository>(
   (ref) => LocalSignDictionaryRepository(ref.watch(appDatabaseProvider)),
 );
+final publishedContentProvider = Provider<PublishedContent>(
+  (ref) => PublishedContent(ref.watch(appDatabaseProvider)),
+);
+final publishedRefreshProvider = FutureProvider.autoDispose
+    .family<void, String>((ref, kind) async {
+      final cache = ref.watch(publishedContentProvider);
+      final firestore = ref.watch(firebaseSessionProvider)?.firestore;
+      if (firestore == null) return;
+      List<ContentItem> items;
+      try {
+        items = await fetchPublished(firestore, kind);
+      } on Exception {
+        return; // Keep the last published catalog when offline.
+      }
+      if (ref.mounted) await cache.replace(kind, items);
+    });
+final publishedLessonsProvider = FutureProvider.autoDispose<List<ContentItem>>((
+  ref,
+) async {
+  if (ref.watch(firebaseSessionProvider) == null) return [];
+  final cache = ref.watch(publishedContentProvider);
+  await ref.watch(publishedRefreshProvider('lessons').future);
+  final supported = await ref.watch(supportedPracticeLabelsProvider.future);
+  return (await cache.read('lessons')).where((item) {
+    final targets = item['targets'];
+    return item['state'] == 'published' &&
+        targets is List &&
+        targets.isNotEmpty &&
+        targets.every(supported.contains);
+  }).toList();
+});
 final bundledDictionaryProvider = FutureProvider<void>((ref) async {
   final catalog = jsonDecode(
     await rootBundle.loadString('assets/dictionary/catalog.json'),
@@ -125,6 +159,23 @@ final supportedPracticeLabelsProvider = FutureProvider<Set<String>>((
 final dictionaryProvider = FutureProvider.autoDispose
     .family<List<SignEntry>, String>((ref, query) async {
       final repository = ref.watch(dictionaryRepositoryProvider);
-      await ref.watch(bundledDictionaryProvider.future);
-      return repository.search(query);
+      if (ref.watch(firebaseSessionProvider) == null) {
+        await ref.watch(bundledDictionaryProvider.future);
+        return repository.search(query);
+      }
+      final cache = ref.watch(publishedContentProvider);
+      await Future.wait([
+        ref.watch(bundledDictionaryProvider.future),
+        ref.watch(publishedRefreshProvider('signs').future),
+        ref.watch(publishedRefreshProvider('categories').future),
+      ]);
+      final entries = await cache.overlay(await repository.search(''));
+      final normalized = query.trim().toLowerCase();
+      return entries
+          .where(
+            (entry) =>
+                entry.label.toLowerCase().contains(normalized) ||
+                entry.code.toLowerCase().contains(normalized),
+          )
+          .toList();
     });
